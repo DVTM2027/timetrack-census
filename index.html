@@ -1,0 +1,731 @@
+import { useState, useEffect } from "react";
+
+const TASKS_LIST=["Elaboración de pruebas","Seguimiento","Revisión de pruebas","Levantamiento y desarrollo de análisis inicial","Revisión de análisis","Reunión interna","Reunión externa","Gestión de documentos (entrega y recepción)","Gestión de documentos archivo"];
+const TIPOS_DEVOLUCION=["Devolución de IVA Proveedor Directo","Devolución de IVA Exportador","Devolución Retenciones de IVA","Devolución de IVA - Interes Social","Devolución de IVA - Proyectos Inmobiliarios","Renta - Pago indebido","Renta - Pago en exceso","Otros pagos indebidos o en exceso"];
+const AVATARS=["👩‍💼","👨‍💼","👩‍💻","👨‍💻","👩‍🔬","👨‍🔬","👩‍🎓","👨‍🎓","🧑‍💼","👩‍🏫","👨‍🏫","🦸‍♀️","🦸‍♂️","🧙‍♀️","🧙‍♂️","🐱","🦊","🐼","🐨","🦁","🐯","🦋","🌟","⚡","🔥","🌈","🎯","🚀","💎","🌸"];
+
+const P={gold:"#C9A84C",goldL:"#F0D080",goldD:"#8B6914",black:"#0F0F0F",dark:"#1A1A1A",gray:"#4A4A4A",lightG:"#F5F5F0",border:"#D4A843",white:"#FFFFFF",danger:"#C0392B",success:"#2E7D32"};
+
+const ROLES={
+  jefe:        {label:"💼 Jefe",        color:P.black,  bg:"#F0E8C8"},
+  coordinadora:{label:"👑 Coordinador", color:P.goldD,  bg:"#FDF6DC"},
+  senior:      {label:"🔵 Senior",      color:"#1A4A7A", bg:"#D6E8F7"},
+  semsenior:   {label:"🟡 Semi Senior", color:"#7A4A00", bg:"#FFF0CC"},
+  junior:      {label:"🟢 Junior",      color:"#1A5C2A", bg:"#D6F0DC"},
+};
+const ROLE_ORDER=["jefe","coordinadora","senior","semsenior","junior"];
+const CAN_ASSIGN_TO={jefe:["coordinadora","senior","semsenior","junior"],coordinadora:["senior","semsenior","junior"],senior:["semsenior","junior"],semsenior:["junior"],junior:[]};
+
+const INIT_USERS=[
+  {id:0,name:"Marcela Alejandro",firstName:"Marcela",lastName:"Alejandro",email:"m.alejandro@censusconsultores.com.ec",password:"GUAC2024",role:"jefe",avatar:"👩‍💼"},
+  {id:1,name:"Denisse Terán",firstName:"Denisse",lastName:"Terán",email:"d.teran@censusconsultores.com.ec",password:"TERA2024",role:"coordinadora",avatar:"👑"},
+  {id:2,name:"Cristian Alarcón",firstName:"Cristian",lastName:"Alarcón",email:"c.alarcon@censusconsultores.com.ec",password:"ALAR2024",role:"senior",avatar:"👨‍💻"},
+  {id:3,name:"Daniel Salazar",firstName:"Daniel",lastName:"Salazar",email:"d.salazar@censusconsultores.com.ec",password:"SALA2024",role:"semsenior",avatar:"🧑‍💼"},
+  {id:4,name:"Henry Apolo",firstName:"Henry",lastName:"Apolo",email:"h.apolo@censusconsultores.com.ec",password:"APOL2024",role:"semsenior",avatar:"👨‍🔬"},
+  {id:5,name:"Verónica Llumitaxi",firstName:"Verónica",lastName:"Llumitaxi",email:"v.llumitaxi@censusconsultores-contabilidad.com",password:"LLUM2024",role:"junior",avatar:"👩‍🎓"},
+  {id:6,name:"Brithanny Castillo",firstName:"Brithanny",lastName:"Castillo",email:"b.castillo@censusconsultores-contabilidad.com",password:"CAST2024",role:"junior",avatar:"👩‍💻"},
+  {id:7,name:"Sugey Plúa",firstName:"Sugey",lastName:"Plúa",email:"a.plua@censusconsultores-contabilidad.com",password:"PLUA2024",role:"junior",avatar:"🌸"},
+  {id:8,name:"Angel Villamar",firstName:"Angel",lastName:"Villamar",email:"a.villamar@censusconsultores.com.ec",password:"VILL2024",role:"junior",avatar:"👨‍🎓"},
+  {id:9,name:"Darling Pinargote",firstName:"Darling",lastName:"Pinargote",email:"d.pinargote@censusconsultores-contabilidad.com",password:"PINA2024",role:"junior",avatar:"⚡"},
+  {id:10,name:"Anthony Cabrera",firstName:"Anthony",lastName:"Cabrera",email:"a.cabrera@censusconsultores-contabilidad.com",password:"CABR2024",role:"junior",avatar:"🎯"},
+  {id:11,name:"Lady Quimis",firstName:"Lady",lastName:"Quimis",email:"l.quimis@censusconsultores.com.ec",password:"QUIM2024",role:"junior",avatar:"🌟"},
+  {id:12,name:"Einstein Rodriguez",firstName:"Einstein",lastName:"Rodriguez",email:"e.rodriguez@censusconsultores-contabilidad.com",password:"RODR2024",role:"junior",avatar:"🚀"},
+  {id:13,name:"Xiomara Apolinario",firstName:"Xiomara",lastName:"Apolinario",email:"a.apolinario@censusconsultores-contabilidad.com",password:"APOL2024",role:"junior",avatar:"💎"},
+  {id:14,name:"Cyndi Granda",firstName:"Cyndi",lastName:"Granda",email:"c.granda@censusconsultores-contabilidad.com",password:"GRAN2024",role:"junior",avatar:"🌈"},
+  {id:15,name:"Melanie Ruiz",firstName:"Melanie",lastName:"Ruiz",email:"m.ruiz@censusconsultores.com.ec",password:"RUIZ2024",role:"junior",avatar:"🦋"},
+  {id:16,name:"Emily Mendoza",firstName:"Emily",lastName:"Mendoza",email:"e.mendoza@censusconsultores.com.ec",password:"MEND2024",role:"junior",avatar:"🔥"},
+  {id:17,name:"María Contreras",firstName:"María",lastName:"Contreras",email:"f.contreras@censusconsultores-contabilidad.com",password:"CONT2024",role:"junior",avatar:"👩‍🏫"},
+  {id:18,name:"Angel León",firstName:"Angel",lastName:"León",email:"a.leon@censusconsultores-contabilidad.com",password:"LEON2024",role:"junior",avatar:"🦁"},
+  {id:19,name:"Jaime Martillo",firstName:"Jaime",lastName:"Martillo",email:"j.martillo@censusconsultores-contabilidad.com",password:"MART2024",role:"junior",avatar:"🐯"},
+  {id:20,name:"Miguel Suárez",firstName:"Miguel",lastName:"Suárez",email:"m.suarez@censusconsultores-contabilidad.com",password:"SUAR2024",role:"junior",avatar:"🦊"},
+  {id:21,name:"Lenyn Abata",firstName:"Lenyn",lastName:"Abata",email:"l.abata@censusconsultores-contabilidad.com",password:"ABAT2024",role:"junior",avatar:"🐼"},
+  {id:22,name:"Alisson Zambrano",firstName:"Alisson",lastName:"Zambrano",email:"a.zambrano@censusconsultores-contabilidad.com",password:"ZAMB2024",role:"junior",avatar:"🌸"},
+  {id:23,name:"Jaime Jaramillo",firstName:"Jaime",lastName:"Jaramillo",email:"j.jaramillo@censusconsultores-contabilidad.com",password:"JARA2024",role:"junior",avatar:"🎯"},
+];
+
+const INIT_CLIENTS=[
+  {id:1,compania:"Empresa ABC S.A.",tipoDevolucion:"Devolución de IVA Exportador",periodos:["Enero 2025","Febrero 2025"]},
+  {id:2,compania:"Comercial XYZ Cía. Ltda.",tipoDevolucion:"Renta - Pago indebido",periodos:["Marzo 2025"]},
+];
+const INIT_COLABS=INIT_USERS.map(u=>({id:u.id,userId:u.id,nombre:u.name,cargo:ROLES[u.role]?.label.replace(/[^\w\s]/gi,"").trim()||u.role,correo:u.email,telefono:""}));
+
+const ts=()=>Date.now();
+const msToH=ms=>Math.round((ms/3600000)*100)/100;
+const fmtT=ms=>{const s=Math.floor(ms/1000),m=Math.floor(s/60),h=Math.floor(m/60);return h>0?`${h}h ${m%60}m ${s%60}s`:m>0?`${m}m ${s%60}s`:`${s}s`;};
+const mkTask=o=>({id:ts(),status:"inprogress",startedAt:ts(),pausedAt:null,activeMs:0,completedAt:null,hours:null,autopaused:false,observacion:null,eventoNombre:null,subtasks:[],...o});
+const liveMs=i=>(i.status==="done"||i.status==="paused")?i.activeMs:i.activeMs+(ts()-i.startedAt);
+const isWorkHour=()=>{const t=new Date().getHours()*60+new Date().getMinutes();return t>=540&&t<1050;};
+const rc=r=>ROLES[r]?.color||P.gray;
+const rbg=r=>ROLES[r]?.bg||P.lightG;
+const rl=r=>ROLES[r]?.label||r;
+const rBadge=r=>({background:rbg(r),color:rc(r),border:`1px solid ${rc(r)}44`,padding:"2px 8px",borderRadius:99,fontSize:11,fontWeight:700,display:"inline-block"});
+const iSt={width:"100%",marginTop:4,marginBottom:12,padding:"9px 10px",border:`1.5px solid ${P.border}`,borderRadius:7,fontSize:13,boxSizing:"border-box",outline:"none",background:P.white};
+
+const INIT_TASKS=[
+  mkTask({id:1,title:"Elaboración de pruebas",assignedTo:2,assignedBy:1,clientId:1,periodo:"Enero 2025",startedAt:ts()-5400000,activeMs:4200000}),
+  mkTask({id:2,title:"Seguimiento",assignedTo:3,assignedBy:1,clientId:2,periodo:"Marzo 2025",status:"paused",startedAt:ts()-9000000,activeMs:7200000}),
+  mkTask({id:3,title:"Revisión de pruebas",assignedTo:5,assignedBy:2,clientId:1,periodo:"Febrero 2025",status:"done",activeMs:10800000,hours:3,completedAt:ts()-3600000}),
+];
+
+function Modal({title,onClose,children}){
+  return <div style={{position:"fixed",inset:0,background:"#00000077",display:"flex",alignItems:"center",justifyContent:"center",zIndex:999}}>
+    <div style={{background:P.white,borderRadius:14,padding:24,width:460,maxWidth:"95vw",boxShadow:"0 8px 32px #00000044",maxHeight:"92vh",overflowY:"auto",border:`1px solid ${P.border}`}}>
+      {title&&<h3 style={{margin:"0 0 14px",color:P.black,borderBottom:`2px solid ${P.gold}`,paddingBottom:8}}>{title}</h3>}
+      {children}
+    </div>
+  </div>;
+}
+
+function BtnRow({onCancel,onConfirm,label,color}){
+  return <div style={{display:"flex",gap:10}}>
+    <button onClick={onCancel} style={{flex:1,padding:10,border:`1.5px solid ${P.border}`,borderRadius:8,background:P.white,cursor:"pointer",fontWeight:600,color:P.gray}}>Cancelar</button>
+    <button onClick={onConfirm} style={{flex:1,padding:10,background:color||P.gold,color:color===P.gold||!color?P.black:P.white,border:"none",borderRadius:8,fontWeight:700,cursor:"pointer"}}>{label}</button>
+  </div>;
+}
+
+function ReporteView({tasks,clients,users}){
+  const [desde,setDesde]=useState("");
+  const [hasta,setHasta]=useState("");
+  const [res,setRes]=useState(null);
+  const gC=id=>clients.find(c=>c.id===id);
+  const gU=id=>users.find(u=>u.id===id);
+
+  const consultar=()=>{
+    const d=desde?new Date(desde+" 00:00:00"):null;
+    const h=hasta?new Date(hasta+" 23:59:59"):null;
+    const filas=[];
+    const ahora=Date.now();
+    tasks.forEach(t=>{
+      const fecha=t.completedAt?new Date(t.completedAt):new Date(ahora);
+      if(d&&fecha<d)return;if(h&&fecha>h)return;
+      const cl=gC(t.clientId);
+      const tramite=cl?`${cl.compania} | ${cl.tipoDevolucion} | ${t.periodo||""}`:"Sin trámite";
+      const persona=gU(t.assignedTo);
+      const horasActivas=t.status==="done"?(t.hours||0):msToH(t.status==="paused"?t.activeMs:t.activeMs+(ahora-t.startedAt));
+      const horasPausa=t.eventoNombre?msToH(Math.max(0,(t.status==="done"?t.completedAt:ahora)-t.startedAt-t.activeMs)):0;
+      const estado=t.status==="done"?"Completada":t.status==="paused"?"Pausada":"En progreso";
+      filas.push({tramite,nombre:persona?.name||"—",horas:horasActivas,actividad:t.title,eventoNombre:"—",horasPausa:0,observacion:t.observacion||"—",fecha:t.completedAt?new Date(t.completedAt).toLocaleDateString("es-EC"):"En curso",estado});
+      if(t.eventoNombre)filas.push({tramite:"No relacionado a proyecto",nombre:persona?.name||"—",horas:0,actividad:"Evento No Relacionado a Proyecto",eventoNombre:t.eventoNombre,horasPausa,observacion:"—",fecha:t.completedAt?new Date(t.completedAt).toLocaleDateString("es-EC"):"En curso",estado});
+      t.subtasks.forEach(st=>{
+        const sf=st.completedAt?new Date(st.completedAt):new Date(ahora);
+        if(d&&sf<d)return;if(h&&sf>h)return;
+        const sp=gU(st.assignedTo);
+        const stH=st.status==="done"?(st.hours||0):msToH(st.status==="paused"?st.activeMs:st.activeMs+(ahora-st.startedAt));
+        const stP=st.eventoNombre?msToH(Math.max(0,(st.status==="done"?st.completedAt:ahora)-st.startedAt-st.activeMs)):0;
+        const stE=st.status==="done"?"Completada":st.status==="paused"?"Pausada":"En progreso";
+        filas.push({tramite,nombre:sp?.name||"—",horas:stH,actividad:st.title,eventoNombre:"—",horasPausa:0,observacion:st.observacion||"—",fecha:st.completedAt?new Date(st.completedAt).toLocaleDateString("es-EC"):"En curso",estado:stE});
+        if(st.eventoNombre)filas.push({tramite:"No relacionado a proyecto",nombre:sp?.name||"—",horas:0,actividad:"Evento No Relacionado a Proyecto",eventoNombre:st.eventoNombre,horasPausa:stP,observacion:"—",fecha:st.completedAt?new Date(st.completedAt).toLocaleDateString("es-EC"):"En curso",estado:stE});
+      });
+    });
+    setRes(filas);
+  };
+
+  const descargar=()=>{
+    if(!res||!res.length)return;
+    const hdrs=["Trámite","Nombre","Horas Trabajadas","Actividad Desarrollada","Evento No Relacionado","Horas de Pausa (Evento)","Observación","Fecha","Estado"];
+    const rows=[hdrs,...res.map(r=>[r.tramite,r.nombre,r.horas,r.actividad,r.eventoNombre,r.horasPausa,r.observacion,r.fecha,r.estado])];
+    const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+    const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download=`reporte_census_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url);
+  };
+
+  const total=res?res.reduce((s,r)=>s+r.horas,0):0;
+
+  return <div>
+    <h2 style={{margin:"0 0 20px",color:P.black,fontSize:19,fontWeight:800}}>📊 Reporte de Horas</h2>
+    <div style={{background:P.white,borderRadius:12,border:`1px solid ${P.border}`,padding:20,marginBottom:16}}>
+      <div style={{fontSize:14,fontWeight:700,color:P.black,marginBottom:14}}>🗓️ Rango de fechas</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+        <div><label style={{fontSize:13,fontWeight:600,color:P.dark,display:"block",marginBottom:4}}>Desde</label><input type="date" value={desde} onChange={e=>setDesde(e.target.value)} style={{...iSt,marginBottom:0}}/></div>
+        <div><label style={{fontSize:13,fontWeight:600,color:P.dark,display:"block",marginBottom:4}}>Hasta</label><input type="date" value={hasta} onChange={e=>setHasta(e.target.value)} style={{...iSt,marginBottom:0}}/></div>
+      </div>
+      <div style={{display:"flex",gap:10}}>
+        <button onClick={consultar} style={{flex:1,padding:"11px",background:P.black,color:P.gold,border:"none",borderRadius:8,fontWeight:700,fontSize:14,cursor:"pointer"}}>🔍 Consultar</button>
+        {res&&res.length>0&&<button onClick={descargar} style={{flex:1,padding:"11px",background:P.gold,color:P.black,border:"none",borderRadius:8,fontWeight:700,fontSize:14,cursor:"pointer"}}>⬇️ Descargar Excel</button>}
+      </div>
+    </div>
+    {res&&<div style={{background:P.white,borderRadius:12,border:`1px solid ${P.border}`,padding:20}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}}>
+        <div><div style={{fontSize:16,fontWeight:800,color:P.black}}>Resultados</div><div style={{fontSize:13,color:P.gray}}>{res.length} registro{res.length!==1?"s":""}</div></div>
+        <div style={{background:P.lightG,border:`1px solid ${P.border}`,borderRadius:8,padding:"8px 16px",textAlign:"center"}}>
+          <div style={{fontSize:11,fontWeight:700,color:P.goldD}}>TOTAL HORAS</div>
+          <div style={{fontSize:22,fontWeight:800,color:P.black}}>{Math.round(total*100)/100}h</div>
+        </div>
+      </div>
+      {res.length===0
+        ?<div style={{textAlign:"center",padding:40,color:P.gray}}><div style={{fontSize:32,marginBottom:8}}>📭</div><div>No hay registros.</div></div>
+        :<div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+            <thead><tr style={{background:P.black}}>
+              {["Trámite","Nombre","Actividad","Horas","Evento","Hrs Pausa","Observación","Fecha","Estado"].map(h=><th key={h} style={{padding:"10px 12px",textAlign:"left",fontWeight:700,color:P.gold,fontSize:12,whiteSpace:"nowrap"}}>{h}</th>)}
+            </tr></thead>
+            <tbody>{res.map((r,i)=><tr key={i} style={{borderBottom:`1px solid ${P.border}44`,background:r.tramite==="No relacionado a proyecto"?"#FFF8E7":i%2===0?P.white:P.lightG}}>
+              <td style={{padding:"10px 12px"}}>
+                {r.tramite==="No relacionado a proyecto"
+                  ?<span style={{fontSize:12,fontWeight:700,color:P.danger}}>📌 No relacionado</span>
+                  :<div><div style={{fontWeight:600,color:P.black,fontSize:12}}>{r.tramite.split(" | ")[0]}</div><div style={{fontSize:11,color:P.goldD}}>{r.tramite.split(" | ")[1]}</div><div style={{fontSize:11,color:P.gray}}>📅 {r.tramite.split(" | ")[2]}</div></div>}
+              </td>
+              <td style={{padding:"10px 12px",fontWeight:600,color:P.dark}}>{r.nombre}</td>
+              <td style={{padding:"10px 12px",color:P.gray}}>{r.actividad}</td>
+              <td style={{padding:"10px 12px",fontWeight:800,color:P.goldD,whiteSpace:"nowrap"}}>{r.horas>0?`${r.horas}h`:"—"}</td>
+              <td style={{padding:"10px 12px",color:r.eventoNombre!=="—"?P.danger:P.gray,fontSize:12,fontWeight:r.eventoNombre!=="—"?700:400}}>{r.eventoNombre}</td>
+              <td style={{padding:"10px 12px",fontWeight:700,color:r.horasPausa>0?P.danger:P.gray,whiteSpace:"nowrap"}}>{r.horasPausa>0?`${r.horasPausa}h`:"—"}</td>
+              <td style={{padding:"10px 12px",color:P.gray,fontSize:12,maxWidth:140}}>{r.observacion}</td>
+              <td style={{padding:"10px 12px",color:P.gray,fontSize:11,whiteSpace:"nowrap"}}>{r.fecha}</td>
+              <td style={{padding:"10px 12px",whiteSpace:"nowrap"}}>
+                <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:99,background:r.estado==="Completada"?"#DCFCE7":r.estado==="Pausada"?"#FFF0CC":"#FDF6DC",color:r.estado==="Completada"?P.success:P.goldD}}>
+                  {r.estado==="Completada"?"✅":r.estado==="Pausada"?"⏸":"🔴"} {r.estado}
+                </span>
+              </td>
+            </tr>)}</tbody>
+          </table>
+          <button onClick={descargar} style={{width:"100%",marginTop:14,padding:"11px",background:P.gold,color:P.black,border:"none",borderRadius:8,fontWeight:700,fontSize:14,cursor:"pointer"}}>⬇️ Descargar Excel ({res.length} registros)</button>
+        </div>}
+    </div>}
+  </div>;
+}
+
+export default function App(){
+  const [users,setUsers]=useState(INIT_USERS);
+  const [cur,setCur]=useState(null);
+  const [lEmail,setLEmail]=useState("");
+  const [lPass,setLPass]=useState("");
+  const [showPass,setShowPass]=useState(false);
+  const [lErr,setLErr]=useState("");
+  const [tasks,setTasks]=useState(INIT_TASKS);
+  const [clients,setClients]=useState(INIT_CLIENTS);
+  const [colabs,setColabs]=useState(INIT_COLABS);
+  const [notifs,setNotifs]=useState([]);
+  const [view,setView]=useState("board");
+  const [,setTick]=useState(0);
+
+  // Modales
+  const [showNT,setShowNT]=useState(false);
+  const [showST,setShowST]=useState(null);
+  const [showAv,setShowAv]=useState(false);
+  const [showNP,setShowNP]=useState(false);
+  const [showCF,setShowCF]=useState(false);
+  const [editCl,setEditCl]=useState(null);
+  const [showColF,setShowColF]=useState(false);
+  const [editCol,setEditCol]=useState(null);
+  const [showCP,setShowCP]=useState(false);
+  const [pf,setPf]=useState({current:"",nuevo:"",confirm:""});
+  const [pErr,setPErr]=useState("");
+  const [pOk,setPOk]=useState(false);
+  const [showEv,setShowEv]=useState(null);
+  const [evNombre,setEvNombre]=useState("");
+  const [showObs,setShowObs]=useState(null);
+  const [obsT,setObsT]=useState("");
+  const [alert8,setAlert8]=useState([]);
+  const [showDel,setShowDel]=useState(null); // id tarea a eliminar
+
+  // Forms
+  const [nt,setNt]=useState({title:"",assignedTo:"",clientId:"",periodo:""});
+  const [nst,setNst]=useState({title:"",assignedTo:""});
+  const [cf,setCf]=useState({nombre:"",cargo:"",correo:"",telefono:""});
+  const [clf,setClf]=useState({compania:"",tipoDevolucion:"",periodos:[""]});
+
+  useEffect(()=>{const t=setInterval(()=>setTick(x=>x+1),1000);return()=>clearInterval(t);},[]);
+
+  useEffect(()=>{
+    const chk=()=>{
+      const w=isWorkHour();
+      setTasks(prev=>prev.map(t=>{
+        let u=t;
+        if(!w&&t.status==="inprogress")u={...t,status:"paused",activeMs:t.activeMs+(ts()-t.startedAt),pausedAt:ts(),autopaused:true};
+        if(w&&t.status==="paused"&&t.autopaused)u={...t,status:"inprogress",startedAt:ts(),pausedAt:null,autopaused:false};
+        const st=t.subtasks.map(s=>{
+          if(!w&&s.status==="inprogress")return{...s,status:"paused",activeMs:s.activeMs+(ts()-s.startedAt),pausedAt:ts(),autopaused:true};
+          if(w&&s.status==="paused"&&s.autopaused)return{...s,status:"inprogress",startedAt:ts(),pausedAt:null,autopaused:false};
+          return s;
+        });
+        return{...u,subtasks:st};
+      }));
+    };
+    const iv=setInterval(chk,60000);chk();return()=>clearInterval(iv);
+  },[]);
+
+  useEffect(()=>{
+    if(!cur)return;
+    const iv=setInterval(()=>{
+      tasks.forEach(t=>{
+        if(t.status==="inprogress"&&t.assignedTo===cur.id&&liveMs(t)>=8*3600000&&!alert8.includes(t.id)){
+          setAlert8(a=>[...a,t.id]);
+          pushN(cur.id,"⚠️ Lleva más de 8h activas. ¿Olvidaste completarla?","alerta",t.title);
+        }
+      });
+    },60000);
+    return()=>clearInterval(iv);
+  },[cur,tasks,alert8]);
+
+  const gU=id=>users.find(u=>u.id===id);
+  const gC=id=>clients.find(c=>c.id===id);
+  const role=cur?.role,isJ=role==="jefe",isC=role==="coordinadora",isSr=role==="senior",isSs=role==="semsenior";
+  const canAssign=isJ||isC||isSr||isSs;
+  const canColabs=isJ||isC||isSr;
+  const canClients=isJ||isC;
+  const assignTo=!cur?[]:isJ?users.filter(u=>u.id!==cur.id):users.filter(u=>CAN_ASSIGN_TO[role]?.includes(u.role));
+  const subTo=!cur?[]:users.filter(u=>CAN_ASSIGN_TO[role]?.includes(u.role));
+  const myN=cur?notifs.filter(n=>n.userId===cur.id):[];
+  const unread=myN.filter(n=>!n.read).length;
+  const pushN=(uid,msg,tipo,tt)=>setNotifs(p=>[{id:ts(),userId:uid,msg,tipo,taskTitle:tt,read:false},...p]);
+
+  const myTasks=()=>{
+    if(!cur)return[];
+    if(isJ||isC)return tasks;
+    if(isSr||isSs)return tasks.filter(t=>t.assignedTo===cur.id||t.assignedBy===cur.id);
+    return tasks.filter(t=>t.assignedTo===cur.id);
+  };
+
+  const upd=(tid,sid,fn)=>setTasks(tasks.map(t=>{if(t.id!==tid)return t;if(!sid)return fn(t);return{...t,subtasks:t.subtasks.map(s=>s.id===sid?fn(s):s)};}));
+
+  const togglePause=(tid,sid=null)=>{
+    const task=tasks.find(t=>t.id===tid);
+    const item=sid?task?.subtasks.find(s=>s.id===sid):task;
+    if(!item)return;
+    if(item.status==="inprogress"){setEvNombre("");setShowEv({tid,sid});}
+    else upd(tid,sid,i=>({...i,status:"inprogress",startedAt:ts(),pausedAt:null,autopaused:false}));
+  };
+
+  const confirmarEv=()=>{
+    if(!evNombre.trim())return;
+    const{tid,sid}=showEv;
+    upd(tid,sid,item=>({...item,status:"paused",activeMs:item.activeMs+(ts()-item.startedAt),pausedAt:ts(),autopaused:false,eventoNombre:evNombre.trim()}));
+    setShowEv(null);setEvNombre("");
+  };
+
+  const iniciarComplete=(tid,sid=null)=>{setObsT("");setShowObs({tid,sid});};
+
+  const doComplete=()=>{
+    if(!showObs)return;
+    const{tid,sid}=showObs;
+    upd(tid,sid,item=>{
+      const total=item.status==="paused"?item.activeMs:item.activeMs+(ts()-item.startedAt);
+      return{...item,status:"done",completedAt:ts(),activeMs:total,hours:msToH(total),observacion:obsT.trim()||null};
+    });
+    setShowObs(null);setObsT("");
+  };
+
+  // ── ELIMINAR TAREA ──
+  const eliminarTarea=()=>{
+    setTasks(prev=>prev.filter(t=>t.id!==showDel));
+    setShowDel(null);
+  };
+
+  const addTask=()=>{
+    if(!nt.title||!nt.assignedTo||!nt.clientId||!nt.periodo)return;
+    const aid=parseInt(nt.assignedTo);
+    setTasks([...tasks,mkTask({title:nt.title,assignedTo:aid,assignedBy:cur.id,clientId:parseInt(nt.clientId),periodo:nt.periodo})]);
+    pushN(aid,`${cur.firstName} te asignó una nueva tarea`,"nueva",nt.title);
+    setNt({title:"",assignedTo:"",clientId:"",periodo:""});setShowNT(false);
+  };
+  const addSub=pid=>{
+    if(!nst.title||!nst.assignedTo)return;
+    const aid=parseInt(nst.assignedTo);
+    setTasks(tasks.map(t=>t.id===pid?{...t,subtasks:[...t.subtasks,mkTask({title:nst.title,assignedTo:aid,assignedBy:cur.id})]}:t));
+    pushN(aid,`${cur.firstName} te asignó una sub-tarea`,"nueva",nst.title);
+    setNst({title:"",assignedTo:""});setShowST(null);
+  };
+  const sendRem=task=>{
+    const a=gU(task.assignedTo);if(!a)return;
+    pushN(task.assignedTo,`Recordatorio: tarea ${task.status==="paused"?"pausada":"pendiente"}`,"pendiente",task.title);
+    alert(`✅ Recordatorio enviado a ${a.firstName}`);
+  };
+  const openNC=()=>{setClf({compania:"",tipoDevolucion:"",periodos:[""]});setEditCl(null);setShowCF(true);};
+  const openEC=cl=>{setClf({compania:cl.compania,tipoDevolucion:cl.tipoDevolucion,periodos:[...cl.periodos]});setEditCl(cl);setShowCF(true);};
+  const saveCl=()=>{
+    if(!clf.compania.trim()||!clf.tipoDevolucion)return;
+    const p=clf.periodos.filter(x=>x.trim());
+    if(editCl)setClients(clients.map(c=>c.id===editCl.id?{...c,compania:clf.compania,tipoDevolucion:clf.tipoDevolucion,periodos:p}:c));
+    else setClients([...clients,{id:ts(),compania:clf.compania,tipoDevolucion:clf.tipoDevolucion,periodos:p}]);
+    setShowCF(false);
+  };
+  const openNCol=()=>{setCf({nombre:"",cargo:"",correo:"",telefono:""});setEditCol(null);setShowColF(true);};
+  const openECol=c=>{setCf({nombre:c.nombre,cargo:c.cargo,correo:c.correo,telefono:c.telefono});setEditCol(c);setShowColF(true);};
+  const saveCol=()=>{if(!cf.nombre.trim()||!cf.correo.trim())return;if(editCol)setColabs(colabs.map(c=>c.id===editCol.id?{...c,...cf}:c));else setColabs([...colabs,{id:ts(),userId:null,...cf}]);setShowColF(false);};
+  const selAv=a=>{setUsers(users.map(u=>u.id===cur.id?{...u,avatar:a}:u));setCur({...cur,avatar:a});setShowAv(false);};
+  const savePass=()=>{
+    if(pf.current!==cur.password){setPErr("Contraseña actual incorrecta.");return;}
+    if(pf.nuevo.length<6){setPErr("Mínimo 6 caracteres.");return;}
+    if(pf.nuevo!==pf.confirm){setPErr("Las contraseñas no coinciden.");return;}
+    setUsers(users.map(u=>u.id===cur.id?{...u,password:pf.nuevo}:u));
+    setCur({...cur,password:pf.nuevo});setPErr("");setPOk(true);
+    setTimeout(()=>{setShowCP(false);setPOk(false);setPf({current:"",nuevo:"",confirm:""});},1500);
+  };
+
+  const doLogin=()=>{
+    const u=users.find(u=>u.email.toLowerCase()===lEmail.toLowerCase());
+    if(u&&u.password===lPass){setCur(u);setLErr("");}
+    else setLErr("Correo o contraseña incorrectos.");
+  };
+
+  // ── LOGIN ──
+  if(!cur) return (
+    <div style={{minHeight:"100vh",background:`linear-gradient(135deg,${P.black},${P.dark})`,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+      <div style={{background:P.white,borderRadius:16,padding:36,width:380,boxShadow:"0 20px 60px #00000066",border:`1px solid ${P.border}`}}>
+        <div style={{textAlign:"center",marginBottom:28}}>
+          <div style={{width:70,height:70,background:`linear-gradient(135deg,${P.black},${P.goldD})`,borderRadius:16,display:"flex",alignItems:"center",justifyContent:"center",fontSize:34,margin:"0 auto 12px",border:`2px solid ${P.gold}`}}>⏱️</div>
+          <h2 style={{margin:"0 0 2px",color:P.black,fontSize:22,fontWeight:800,letterSpacing:1}}>TimeTrack Pro</h2>
+          <p style={{color:P.goldD,fontSize:13,margin:0,fontWeight:600}}>Census Consultores</p>
+        </div>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Correo institucional</label>
+        <input value={lEmail} onChange={e=>setLEmail(e.target.value)} placeholder="nombre@censusconsultores.com.ec" style={{...iSt,marginTop:4,marginBottom:8}} type="email"/>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Contraseña</label>
+        <div style={{position:"relative",marginTop:4,marginBottom:12}}>
+          <input value={lPass} onChange={e=>setLPass(e.target.value)} onKeyDown={e=>e.key==="Enter"&&doLogin()} placeholder="Contraseña" type={showPass?"text":"password"} style={{...iSt,marginTop:0,marginBottom:0,paddingRight:40}}/>
+          <button onClick={()=>setShowPass(s=>!s)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:P.gray}}>{showPass?"🙈":"👁️"}</button>
+        </div>
+        {lErr&&<div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:8,padding:"8px 12px",color:P.danger,fontSize:13,marginBottom:10}}>⚠️ {lErr}</div>}
+        <button onClick={doLogin} style={{width:"100%",marginTop:4,padding:12,background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:8,fontWeight:700,fontSize:15,cursor:"pointer",letterSpacing:1}}>INGRESAR</button>
+      </div>
+    </div>
+  );
+
+  const nav=[{id:"board",icon:"📋",label:"Tablero"},{id:"clients",icon:"🏢",label:"Clientes"},{id:"colabs",icon:"👥",label:"Colaboradores"},{id:"report",icon:"📊",label:"Reportes"},...(isJ?[{id:"team",icon:"🏠",label:"Equipo"}]:[])];
+
+  return (
+    <div style={{minHeight:"100vh",background:P.lightG}}>
+      {/* HEADER */}
+      <div style={{background:P.black,borderBottom:`2px solid ${P.gold}`,padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:34,height:34,background:`linear-gradient(135deg,${P.goldD},${P.gold})`,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>⏱️</div>
+          <div><div style={{fontWeight:800,fontSize:16,color:P.gold,letterSpacing:1}}>TimeTrack Pro</div><div style={{fontSize:10,color:P.goldL,letterSpacing:2}}>CENSUS CONSULTORES</div></div>
+        </div>
+        <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+          {nav.map(v=><button key={v.id} onClick={()=>setView(v.id)} style={{padding:"6px 13px",borderRadius:7,border:`1px solid ${view===v.id?P.gold:"transparent"}`,background:view===v.id?P.gold:"transparent",color:view===v.id?P.black:P.goldL,fontWeight:600,cursor:"pointer",fontSize:12}}>{v.icon} {v.label}</button>)}
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <div style={{position:"relative"}}>
+            <button onClick={()=>setShowNP(!showNP)} style={{width:34,height:34,borderRadius:"50%",background:"transparent",border:`1px solid ${P.gold}`,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:P.gold}}>🔔</button>
+            {unread>0&&<div style={{position:"absolute",top:-3,right:-3,background:P.danger,color:P.white,borderRadius:"50%",width:17,height:17,fontSize:9,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{unread}</div>}
+          </div>
+          <div onClick={()=>setShowAv(true)} style={{width:36,height:36,borderRadius:"50%",background:rbg(role),border:`2px solid ${P.gold}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,cursor:"pointer"}}>{cur.avatar}</div>
+          <div><div style={{fontSize:13,fontWeight:700,color:P.gold}}>{cur.firstName} {cur.lastName}</div><span style={{...rBadge(role),fontSize:10}}>{rl(role)}</span></div>
+          <button onClick={()=>setShowCP(true)} style={{padding:"5px 10px",borderRadius:6,border:`1px solid ${P.gold}`,background:"transparent",color:P.gold,cursor:"pointer",fontSize:12}}>🔑</button>
+          <button onClick={()=>setCur(null)} style={{padding:"5px 10px",borderRadius:6,border:`1px solid ${P.goldD}`,background:"transparent",color:P.goldL,cursor:"pointer",fontSize:12}}>Salir</button>
+        </div>
+      </div>
+
+      {/* NOTIFICACIONES */}
+      {showNP&&<div style={{position:"fixed",top:62,right:14,width:320,background:P.white,borderRadius:14,boxShadow:"0 8px 32px #00000033",border:`1px solid ${P.border}`,zIndex:200,maxHeight:440,display:"flex",flexDirection:"column"}}>
+        <div style={{padding:"12px 14px",borderBottom:`1px solid ${P.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",background:P.black,borderRadius:"14px 14px 0 0"}}>
+          <span style={{fontWeight:800,color:P.gold,fontSize:14}}>🔔 Notificaciones</span>
+          <div style={{display:"flex",gap:8}}>
+            {unread>0&&<button onClick={()=>setNotifs(notifs.map(n=>n.userId===cur.id?{...n,read:true}:n))} style={{fontSize:11,color:P.goldL,background:"transparent",border:"none",cursor:"pointer",fontWeight:600}}>Marcar leídas</button>}
+            <button onClick={()=>setShowNP(false)} style={{fontSize:16,background:"transparent",border:"none",cursor:"pointer",color:P.goldL}}>×</button>
+          </div>
+        </div>
+        <div style={{overflowY:"auto",flex:1}}>
+          {myN.length===0&&<div style={{padding:28,textAlign:"center",color:P.gray,fontSize:13}}>Sin notificaciones</div>}
+          {myN.map(n=><div key={n.id} style={{padding:"10px 14px",borderBottom:`1px solid ${P.border}22`,background:n.read?P.white:P.lightG,display:"flex",gap:8,alignItems:"flex-start"}}>
+            <div style={{width:30,height:30,borderRadius:"50%",background:P.lightG,border:`1px solid ${P.border}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}}>{n.tipo==="nueva"?"🆕":n.tipo==="alerta"?"⚠️":"⏰"}</div>
+            <div style={{flex:1}}><div style={{fontSize:12,color:P.black,fontWeight:n.read?400:700}}>{n.msg}</div><div style={{fontSize:11,color:P.gray,marginTop:2}}>📋 {n.taskTitle}</div></div>
+            <button onClick={()=>setNotifs(notifs.filter(x=>x.id!==n.id))} style={{background:"transparent",border:"none",color:P.gray,cursor:"pointer",fontSize:14}}>×</button>
+          </div>)}
+        </div>
+      </div>}
+
+      <div style={{padding:20,maxWidth:1100,margin:"0 auto"}}>
+
+        {/* TABLERO */}
+        {view==="board"&&<>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,flexWrap:"wrap",gap:8}}>
+            <h2 style={{margin:0,color:P.black,fontSize:19,fontWeight:800}}>📋 Tablero de Tareas</h2>
+            {canAssign&&<button onClick={()=>setShowNT(true)} style={{padding:"9px 20px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>+ Nueva Tarea</button>}
+          </div>
+          {myTasks().length===0&&<div style={{textAlign:"center",padding:60,color:P.gray}}>No hay tareas aún.</div>}
+          {myTasks().map(task=>{
+            const asg=gU(task.assignedTo),asr=gU(task.assignedBy),cl=gC(task.clientId);
+            const act=liveMs(task),isR=task.status==="inprogress",isP=task.status==="paused",isD=task.status==="done";
+            const isAssignee=task.assignedTo===cur.id;
+            const canSub=isAssignee&&CAN_ASSIGN_TO[role]?.length>0;
+            return <div key={task.id} style={{background:P.white,borderRadius:12,border:`1.5px solid ${isP?P.goldD:isR?P.gold:P.border}`,padding:16,marginBottom:12,boxShadow:isR?`0 2px 12px ${P.gold}33`:isP?`0 2px 12px ${P.goldD}22`:"0 1px 4px #00000011"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
+                <div style={{flex:1,minWidth:180}}>
+                  {/* TÍTULO + BOTÓN ELIMINAR */}
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,gap:8}}>
+                    <div style={{fontWeight:700,color:P.black,fontSize:14}}>{task.title}</div>
+                    <button
+                      onClick={()=>setShowDel(task.id)}
+                      style={{padding:"3px 10px",background:"#FEF2F2",color:P.danger,border:"1px solid #FECACA",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:12,flexShrink:0}}>
+                      🗑️
+                    </button>
+                  </div>
+                  <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
+                    <span style={{background:isD?"#DCFCE7":isP?"#FFF7ED":"#FDF6DC",color:isD?P.success:P.goldD,padding:"2px 8px",borderRadius:99,fontSize:11,fontWeight:600}}>{isD?"✅ Completada":isP?"⏸ Pausada":"▶ En progreso"}</span>
+                    {cl&&<span style={{fontSize:11,color:P.goldD,background:P.lightG,padding:"2px 8px",borderRadius:99,border:`1px solid ${P.border}`}}>🏢 {cl.compania}</span>}
+                    {task.periodo&&<span style={{fontSize:11,color:P.gray,background:P.lightG,padding:"2px 8px",borderRadius:99}}>📅 {task.periodo}</span>}
+                    {asg&&<span style={rBadge(asg.role)}>{asg.avatar} {asg.firstName}</span>}
+                    {asr&&<span style={{fontSize:11,color:P.gray}}>por {asr.firstName}</span>}
+                    {task.eventoNombre&&isP&&<span style={{fontSize:11,background:"#FFF0CC",color:P.goldD,padding:"2px 8px",borderRadius:99,border:`1px solid ${P.border}`}}>📌 {task.eventoNombre}</span>}
+                  </div>
+                  {task.observacion&&isD&&<div style={{marginTop:6,fontSize:12,color:P.gray,background:P.lightG,borderRadius:6,padding:"5px 8px",border:`1px solid ${P.border}`}}>💬 {task.observacion}</div>}
+                </div>
+                <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
+                  <div style={{background:isD?"#F9F5E7":isP?"#FFF7ED":P.lightG,border:`1.5px solid ${isD?P.gold:isP?P.goldD:P.gold}`,borderRadius:8,padding:"6px 12px",textAlign:"center",minWidth:116}}>
+                    <div style={{fontSize:10,fontWeight:700,color:P.goldD,letterSpacing:1}}>{isD?"✅ TOTAL":isP?"⏸ PAUSADO":"🔴 ACTIVO"}</div>
+                    <div style={{fontSize:14,fontWeight:800,color:P.black,fontVariantNumeric:"tabular-nums"}}>{fmtT(act)}</div>
+                    {isD&&task.hours&&<div style={{fontSize:10,color:P.gray}}>{task.hours}h registradas</div>}
+                  </div>
+                  <div style={{display:"flex",gap:5,flexWrap:"wrap",justifyContent:"flex-end"}}>
+                    {!isD&&<button onClick={()=>sendRem(task)} style={{padding:"5px 9px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:7,cursor:"pointer",fontSize:12}}>🔔</button>}
+                    {!isD&&<button onClick={()=>togglePause(task.id)} style={{padding:"6px 10px",background:isP?P.success:P.danger,color:P.white,border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:11}}>
+                      {isP?"▶ Reanudar":"⏸ EVENTO NO RELACIONADO"}
+                    </button>}
+                    {!isD&&isAssignee&&<button onClick={()=>iniciarComplete(task.id,null)} style={{padding:"6px 12px",background:P.gold,color:P.black,border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:12}}>✅ Completar</button>}
+                    {!isD&&canSub&&<button onClick={()=>setShowST(task.id)} style={{padding:"6px 12px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:7,fontWeight:600,cursor:"pointer",fontSize:12}}>+ Sub-tarea</button>}
+                    {!isD&&alert8.includes(task.id)&&<div style={{fontSize:10,color:P.danger,fontWeight:700,background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:6,padding:"3px 7px"}}>⚠️ +8h</div>}
+                  </div>
+                </div>
+              </div>
+              {task.subtasks.length>0&&<div style={{marginTop:10,paddingLeft:14,borderLeft:`3px solid ${P.border}`}}>
+                <div style={{fontSize:11,fontWeight:700,color:P.goldD,marginBottom:5,letterSpacing:1}}>SUB-TAREAS</div>
+                {task.subtasks.map(st=>{
+                  const stu=gU(st.assignedTo),sa=liveMs(st),sr=st.status==="inprogress",sp=st.status==="paused",sd=st.status==="done";
+                  const stA=st.assignedTo===cur.id;
+                  return <div key={st.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:P.lightG,borderRadius:7,marginBottom:4,flexWrap:"wrap",gap:5,border:`1px solid ${sp?P.goldD:sr?P.gold:P.border}`}}>
+                    <div><span style={{fontSize:13,color:P.black,fontWeight:600}}>{st.title}</span>{stu&&<span style={{...rBadge(stu.role),marginLeft:8,fontSize:10}}>{stu.avatar} {stu.firstName}</span>}</div>
+                    <div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"wrap"}}>
+                      <div style={{background:P.white,border:`1px solid ${P.border}`,borderRadius:6,padding:"3px 8px",fontSize:11,fontWeight:700,color:P.black,fontVariantNumeric:"tabular-nums"}}>{sr?"🔴 ":sp?"⏸ ":""}{fmtT(sa)}</div>
+                      {!sd&&<button onClick={()=>togglePause(task.id,st.id)} style={{padding:"3px 8px",background:sp?P.success:P.danger,color:P.white,border:"none",borderRadius:6,fontWeight:700,cursor:"pointer",fontSize:11}}>{sp?"▶":"⏸"}</button>}
+                      {!sd&&stA&&<button onClick={()=>iniciarComplete(task.id,st.id)} style={{padding:"4px 10px",background:P.gold,color:P.black,border:"none",borderRadius:6,fontWeight:700,cursor:"pointer",fontSize:11}}>✅</button>}
+                    </div>
+                  </div>;
+                })}
+              </div>}
+            </div>;
+          })}
+        </>}
+
+        {/* CLIENTES */}
+        {view==="clients"&&<>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:8}}>
+            <h2 style={{margin:0,color:P.black,fontSize:19,fontWeight:800}}>🏢 Clientes</h2>
+            {canClients&&<button onClick={openNC} style={{padding:"8px 18px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>+ Nuevo Cliente</button>}
+          </div>
+          {!canClients&&<div style={{background:"#FFF8E7",border:`1px solid ${P.border}`,borderRadius:10,padding:12,color:P.goldD,fontSize:13,marginBottom:14}}>Solo Jefe y Coordinador pueden crear clientes.</div>}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))",gap:14}}>
+            {clients.map(cl=><div key={cl.id} style={{background:P.white,borderRadius:12,border:`1.5px solid ${P.border}`,padding:18}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+                <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                  <div style={{width:42,height:42,borderRadius:10,background:P.lightG,border:`1px solid ${P.border}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🏢</div>
+                  <div><div style={{fontWeight:800,color:P.black,fontSize:14}}>{cl.compania}</div><span style={{fontSize:10,background:P.lightG,color:P.goldD,padding:"2px 7px",borderRadius:99,fontWeight:600,border:`1px solid ${P.border}`}}>{cl.tipoDevolucion}</span></div>
+                </div>
+                {canClients&&<div style={{display:"flex",gap:4}}>
+                  <button onClick={()=>openEC(cl)} style={{padding:"4px 8px",background:P.lightG,border:`1px solid ${P.border}`,borderRadius:6,cursor:"pointer"}}>✏️</button>
+                  <button onClick={()=>setClients(clients.filter(c=>c.id!==cl.id))} style={{padding:"4px 8px",background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:6,cursor:"pointer"}}>🗑️</button>
+                </div>}
+              </div>
+              <div style={{fontSize:11,fontWeight:700,color:P.goldD,marginBottom:5,letterSpacing:1}}>PERIODOS</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                {cl.periodos.length===0&&<span style={{fontSize:12,color:P.gray}}>Sin periodos</span>}
+                {cl.periodos.map((p,i)=><span key={i} style={{fontSize:11,background:P.lightG,color:P.goldD,padding:"2px 9px",borderRadius:99,fontWeight:600,border:`1px solid ${P.border}`}}>📅 {p}</span>)}
+              </div>
+            </div>)}
+          </div>
+        </>}
+
+        {/* COLABORADORES */}
+        {view==="colabs"&&<>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:8}}>
+            <h2 style={{margin:0,color:P.black,fontSize:19,fontWeight:800}}>👥 Colaboradores</h2>
+            {canColabs&&<button onClick={openNCol} style={{padding:"8px 18px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>+ Agregar</button>}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:12}}>
+            {colabs.map(c=>{
+              const u=c.userId!==null?gU(c.userId):null,ur=u?.role;
+              const pe=tasks.filter(t=>t.assignedTo===c.userId&&t.status==="inprogress").length;
+              const pa=tasks.filter(t=>t.assignedTo===c.userId&&t.status==="paused").length;
+              return <div key={c.id} style={{background:P.white,borderRadius:12,border:`1.5px solid ${P.border}`,padding:16}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <div style={{width:40,height:40,borderRadius:"50%",background:ur?rbg(ur):P.lightG,border:`2px solid ${P.gold}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{u?u.avatar:"👤"}</div>
+                    <div><div style={{fontWeight:700,color:P.black,fontSize:13}}>{c.nombre}</div><div style={{fontSize:11,color:P.gray}}>{c.cargo}</div>{ur&&<span style={{...rBadge(ur),fontSize:10,marginTop:2,display:"inline-block"}}>{rl(ur)}</span>}</div>
+                  </div>
+                  {canColabs&&<div style={{display:"flex",gap:4}}>
+                    <button onClick={()=>openECol(c)} style={{padding:"3px 7px",background:P.lightG,border:`1px solid ${P.border}`,borderRadius:6,cursor:"pointer"}}>✏️</button>
+                    <button onClick={()=>setColabs(colabs.filter(x=>x.id!==c.id))} style={{padding:"3px 7px",background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:6,cursor:"pointer"}}>🗑️</button>
+                  </div>}
+                </div>
+                <div style={{fontSize:12,color:P.gray,display:"flex",flexDirection:"column",gap:4}}>
+                  <div>✉️ <a href={`mailto:${c.correo}`} style={{color:P.goldD,textDecoration:"none"}}>{c.correo}</a></div>
+                  {c.telefono&&<div>📞 {c.telefono}</div>}
+                </div>
+                {(pe>0||pa>0)&&<div style={{marginTop:8,paddingTop:8,borderTop:`1px solid ${P.border}44`,display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {pe>0&&<span style={{fontSize:10,background:P.lightG,color:P.goldD,padding:"2px 7px",borderRadius:99,fontWeight:600,border:`1px solid ${P.border}`}}>▶ {pe} activa{pe>1?"s":""}</span>}
+                  {pa>0&&<span style={{fontSize:10,background:"#FFF0CC",color:P.goldD,padding:"2px 7px",borderRadius:99,fontWeight:600}}>⏸ {pa} pausada{pa>1?"s":""}</span>}
+                </div>}
+              </div>;
+            })}
+          </div>
+        </>}
+
+        {view==="report"&&<ReporteView tasks={tasks} clients={clients} users={users}/>}
+
+        {/* EQUIPO */}
+        {view==="team"&&isJ&&<>
+          <h2 style={{margin:"0 0 18px",color:P.black,fontSize:19,fontWeight:800}}>🏠 Vista del Equipo</h2>
+          {ROLE_ORDER.filter(r=>r!=="jefe").map(r=>{
+            const ms=users.filter(u=>u.role===r);if(!ms.length)return null;
+            return <div key={r} style={{marginBottom:22}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}><span style={rBadge(r)}>{rl(r)}</span><span style={{fontSize:12,color:P.gray}}>{ms.length} miembro{ms.length>1?"s":""}</span></div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))",gap:10}}>
+                {ms.map(u=>{const ut=tasks.filter(t=>t.assignedTo===u.id);const d=ut.filter(t=>t.status==="done").length,a=ut.filter(t=>t.status==="inprogress").length,p=ut.filter(t=>t.status==="paused").length,th=ut.reduce((s,t)=>s+(t.hours||0),0);
+                  return <div key={u.id} style={{background:P.white,borderRadius:12,border:`1.5px solid ${P.border}`,padding:12}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                      <div style={{width:34,height:34,borderRadius:"50%",background:rbg(u.role),border:`2px solid ${P.gold}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>{u.avatar}</div>
+                      <div style={{fontWeight:700,color:P.black,fontSize:12}}>{u.firstName} {u.lastName}</div>
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}}>
+                      {[{l:"▶",v:a,col:P.gold},{l:"⏸",v:p,col:P.goldD},{l:"✅",v:d,col:P.success},{l:"⏱",v:`${th}h`,col:P.black}].map(({l,v,col})=><div key={l} style={{background:P.lightG,borderRadius:6,padding:"5px 6px",textAlign:"center",border:`1px solid ${P.border}44`}}>
+                        <div style={{fontSize:10,color:P.gray}}>{l}</div><div style={{fontSize:13,fontWeight:800,color:col}}>{v}</div>
+                      </div>)}
+                    </div>
+                  </div>;
+                })}
+              </div>
+            </div>;
+          })}
+        </>}
+      </div>
+
+      {/* ── MODAL ELIMINAR TAREA ── */}
+      {showDel&&(()=>{
+        const t=tasks.find(t=>t.id===showDel);
+        return <Modal title="🗑️ Eliminar Tarea" onClose={()=>setShowDel(null)}>
+          <p style={{fontSize:14,color:P.dark,margin:"0 0 10px"}}>¿Estás segura que deseas eliminar esta tarea?</p>
+          <div style={{background:P.lightG,border:`1px solid ${P.border}`,borderRadius:8,padding:"10px 14px",marginBottom:12}}>
+            <span style={{fontWeight:700,color:P.black,fontSize:13}}>{t?.title}</span>
+          </div>
+          <p style={{fontSize:12,color:P.danger,margin:"0 0 16px"}}>⚠️ Esta acción no se puede deshacer.</p>
+          <BtnRow onCancel={()=>setShowDel(null)} onConfirm={eliminarTarea} label="Sí, eliminar" color={P.danger}/>
+        </Modal>;
+      })()}
+
+      {/* MODAL EVENTO */}
+      {showEv&&<Modal title="⏸ Evento No Relacionado a Proyecto" onClose={()=>setShowEv(null)}>
+        <p style={{fontSize:13,color:P.gray,margin:"0 0 14px"}}>El cronómetro se pausará. Indica el nombre del evento:</p>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Nombre del evento *</label>
+        <input value={evNombre} onChange={e=>setEvNombre(e.target.value)} onKeyDown={e=>e.key==="Enter"&&confirmarEv()} placeholder="Ej: Reunión administrativa, Capacitación..." style={iSt} autoFocus/>
+        {!evNombre.trim()&&<p style={{fontSize:11,color:P.danger,margin:"-8px 0 10px"}}>* Campo obligatorio</p>}
+        <BtnRow onCancel={()=>setShowEv(null)} onConfirm={confirmarEv} label="⏸ Pausar y registrar" color={P.danger}/>
+      </Modal>}
+
+      {/* MODAL COMPLETAR */}
+      {showObs&&(()=>{
+        const t=tasks.find(t=>t.id===showObs.tid);
+        const st=showObs.sid?t?.subtasks.find(s=>s.id===showObs.sid):null;
+        const item=st||t,ms=item?liveMs(item):0;
+        return <Modal title="✅ Completar Tarea" onClose={()=>setShowObs(null)}>
+          <p style={{fontSize:13,color:P.gray,margin:"0 0 14px"}}>¿Alguna observación? <span style={{fontSize:12}}>(opcional)</span></p>
+          <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Observación</label>
+          <textarea value={obsT} onChange={e=>setObsT(e.target.value)} placeholder="Ej: Se encontraron diferencias, cliente pendiente de documentos..." style={{...iSt,height:90,resize:"vertical"}}/>
+          <div style={{background:P.lightG,border:`1.5px solid ${P.gold}`,borderRadius:10,padding:12,marginBottom:14,textAlign:"center"}}>
+            <div style={{fontSize:11,fontWeight:700,color:P.goldD,marginBottom:2}}>TIEMPO ACTIVO TRABAJADO</div>
+            <div style={{fontSize:22,fontWeight:800,color:P.black,fontVariantNumeric:"tabular-nums"}}>{fmtT(ms)}</div>
+            <div style={{fontSize:12,color:P.gray,marginTop:2}}>≈ {msToH(ms)}h se registrarán</div>
+          </div>
+          <BtnRow onCancel={()=>setShowObs(null)} onConfirm={doComplete} label="✅ Confirmar y guardar" color={P.gold}/>
+        </Modal>;
+      })()}
+
+      {/* MODAL CONTRASEÑA */}
+      {showCP&&<Modal title="🔑 Cambiar Contraseña" onClose={()=>{setShowCP(false);setPErr("");setPOk(false);setPf({current:"",nuevo:"",confirm:""});}}>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Contraseña actual</label>
+        <input value={pf.current} onChange={e=>setPf({...pf,current:e.target.value})} type="password" style={iSt}/>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Nueva contraseña</label>
+        <input value={pf.nuevo} onChange={e=>setPf({...pf,nuevo:e.target.value})} type="password" style={iSt}/>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Confirmar nueva contraseña</label>
+        <input value={pf.confirm} onChange={e=>setPf({...pf,confirm:e.target.value})} type="password" style={iSt}/>
+        {pErr&&<div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:8,padding:"8px 12px",color:P.danger,fontSize:13,marginBottom:10}}>⚠️ {pErr}</div>}
+        {pOk&&<div style={{background:"#F0FDF4",border:"1px solid #BBF7D0",borderRadius:8,padding:"8px 12px",color:P.success,fontSize:13,marginBottom:10}}>✅ ¡Actualizada!</div>}
+        <BtnRow onCancel={()=>{setShowCP(false);setPErr("");setPf({current:"",nuevo:"",confirm:"" });}} onConfirm={savePass} label="Guardar" color={P.black}/>
+      </Modal>}
+
+      {/* MODAL COLABORADOR */}
+      {showColF&&<Modal title={editCol?"✏️ Editar":"👤 Nuevo Colaborador"} onClose={()=>setShowColF(false)}>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Nombre completo</label>
+        <input value={cf.nombre} onChange={e=>setCf({...cf,nombre:e.target.value})} style={iSt}/>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Cargo</label>
+        <input value={cf.cargo} onChange={e=>setCf({...cf,cargo:e.target.value})} style={iSt}/>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Correo</label>
+        <input value={cf.correo} onChange={e=>setCf({...cf,correo:e.target.value})} style={iSt} type="email"/>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Teléfono</label>
+        <input value={cf.telefono} onChange={e=>setCf({...cf,telefono:e.target.value})} style={iSt} type="tel"/>
+        <BtnRow onCancel={()=>setShowColF(false)} onConfirm={saveCol} label={editCol?"Guardar":"Agregar"} color={P.black}/>
+      </Modal>}
+
+      {/* MODAL CLIENTE */}
+      {showCF&&<Modal title={editCl?"✏️ Editar Cliente":"🏢 Nuevo Cliente"} onClose={()=>setShowCF(false)}>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Compañía</label>
+        <input value={clf.compania} onChange={e=>setClf({...clf,compania:e.target.value})} style={iSt}/>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Tipo de Devolución</label>
+        <select value={clf.tipoDevolucion} onChange={e=>setClf({...clf,tipoDevolucion:e.target.value})} style={iSt}>
+          <option value="">Selecciona tipo...</option>
+          {TIPOS_DEVOLUCION.map(t=><option key={t} value={t}>{t}</option>)}
+        </select>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Periodos</label>
+        {clf.periodos.map((p,i)=><div key={i} style={{display:"flex",gap:6,marginTop:4,marginBottom:6}}>
+          <input value={p} onChange={e=>{const ps=[...clf.periodos];ps[i]=e.target.value;setClf({...clf,periodos:ps});}} placeholder="Ej: Enero 2025" style={{...iSt,marginTop:0,marginBottom:0,flex:1}}/>
+          {clf.periodos.length>1&&<button onClick={()=>setClf({...clf,periodos:clf.periodos.filter((_,idx)=>idx!==i)})} style={{padding:"0 10px",background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:7,cursor:"pointer",color:P.danger,fontWeight:700,fontSize:16}}>×</button>}
+        </div>)}
+        <button onClick={()=>setClf({...clf,periodos:[...clf.periodos,""]})} style={{width:"100%",padding:"7px",border:`1.5px dashed ${P.border}`,borderRadius:7,background:"transparent",color:P.gray,cursor:"pointer",fontSize:13,marginBottom:14,fontWeight:600}}>+ Agregar periodo</button>
+        <BtnRow onCancel={()=>setShowCF(false)} onConfirm={saveCl} label={editCl?"Guardar":"Crear"} color={P.black}/>
+      </Modal>}
+
+      {/* MODAL NUEVA TAREA */}
+      {showNT&&<Modal title="Nueva Tarea" onClose={()=>setShowNT(false)}>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Actividad</label>
+        <select value={nt.title} onChange={e=>setNt({...nt,title:e.target.value})} style={iSt}>
+          <option value="">Selecciona actividad...</option>
+          {TASKS_LIST.map(t=><option key={t} value={t}>{t}</option>)}
+        </select>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Asignar a</label>
+        <select value={nt.assignedTo} onChange={e=>setNt({...nt,assignedTo:e.target.value})} style={iSt}>
+          <option value="">Selecciona persona...</option>
+          {assignTo.map(u=><option key={u.id} value={u.id}>{u.avatar} {u.firstName} {u.lastName} — {rl(u.role)}</option>)}
+        </select>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Cliente</label>
+        <select value={nt.clientId} onChange={e=>setNt({...nt,clientId:e.target.value,periodo:""})} style={iSt}>
+          <option value="">Selecciona cliente...</option>
+          {clients.map(c=><option key={c.id} value={c.id}>{c.compania}</option>)}
+        </select>
+        {nt.clientId&&<>
+          <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Periodo</label>
+          <select value={nt.periodo} onChange={e=>setNt({...nt,periodo:e.target.value})} style={iSt}>
+            <option value="">Selecciona periodo...</option>
+            {(gC(parseInt(nt.clientId))?.periodos||[]).map(p=><option key={p} value={p}>{p}</option>)}
+          </select>
+          {gC(parseInt(nt.clientId))?.tipoDevolucion&&<div style={{background:P.lightG,borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:12,color:P.goldD,border:`1px solid ${P.border}`}}>📋 {gC(parseInt(nt.clientId)).tipoDevolucion}</div>}
+        </>}
+        <div style={{background:P.lightG,borderRadius:8,padding:9,marginBottom:14,fontSize:12,color:P.goldD,border:`1px solid ${P.border}`}}>⏱️ El cronómetro iniciará automáticamente.</div>
+        <BtnRow onCancel={()=>setShowNT(false)} onConfirm={addTask} label="Crear y arrancar ⏱️" color={P.black}/>
+      </Modal>}
+
+      {/* MODAL SUB-TAREA */}
+      {showST&&<Modal title="Agregar Sub-tarea" onClose={()=>setShowST(null)}>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Actividad</label>
+        <select value={nst.title} onChange={e=>setNst({...nst,title:e.target.value})} style={iSt}>
+          <option value="">Selecciona actividad...</option>
+          {TASKS_LIST.map(t=><option key={t} value={t}>{t}</option>)}
+        </select>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Asignar a</label>
+        <select value={nst.assignedTo} onChange={e=>setNst({...nst,assignedTo:e.target.value})} style={iSt}>
+          <option value="">Selecciona persona...</option>
+          {subTo.map(u=><option key={u.id} value={u.id}>{u.avatar} {u.firstName} {u.lastName} — {rl(u.role)}</option>)}
+        </select>
+        <BtnRow onCancel={()=>setShowST(null)} onConfirm={()=>addSub(showST)} label="Asignar ⏱️" color={P.black}/>
+      </Modal>}
+
+      {/* MODAL AVATAR */}
+      {showAv&&<Modal title="Elige tu Avatar" onClose={()=>setShowAv(false)}>
+        <p style={{fontSize:13,color:P.gray,margin:"0 0 12px"}}>Haz clic en el avatar que más te guste 👇</p>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:7,marginBottom:14}}>
+          {AVATARS.map(a=><div key={a} onClick={()=>selAv(a)} style={{fontSize:26,textAlign:"center",padding:7,borderRadius:9,cursor:"pointer",background:cur.avatar===a?P.lightG:P.white,border:`2px solid ${cur.avatar===a?P.gold:P.border}`}}>{a}</div>)}
+        </div>
+        <button onClick={()=>setShowAv(false)} style={{width:"100%",padding:10,border:`1px solid ${P.border}`,borderRadius:8,background:"transparent",cursor:"pointer",fontWeight:600,color:P.gray}}>Cancelar</button>
+      </Modal>}
+    </div>
+  );
+}
