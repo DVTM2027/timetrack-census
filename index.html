@@ -1,4 +1,28 @@
-import { useState, useEffect } from "react";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TimeTrack Pro — Census Consultores</title>
+  <meta name="theme-color" content="#0F0F0F"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-title" content="TimeTrack"/>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:system-ui,-apple-system,sans-serif;background:#F5F5F0;}
+    input,select,button,textarea{font-family:inherit;}
+    ::-webkit-scrollbar{width:6px;}
+    ::-webkit-scrollbar-track{background:#F5F5F0;}
+    ::-webkit-scrollbar-thumb{background:#C9A84C;border-radius:99px;}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const{useState,useEffect}=React;
 
 const TASKS_LIST=["Elaboración de pruebas","Seguimiento","Revisión de pruebas","Levantamiento y desarrollo de análisis inicial","Revisión de análisis","Reunión interna","Reunión externa","Gestión de documentos (entrega y recepción)","Gestión de documentos archivo"];
 const TIPOS_DEVOLUCION=["Devolución de IVA Proveedor Directo","Devolución de IVA Exportador","Devolución Retenciones de IVA","Devolución de IVA - Interes Social","Devolución de IVA - Proyectos Inmobiliarios","Renta - Pago indebido","Renta - Pago en exceso","Otros pagos indebidos o en exceso"];
@@ -79,7 +103,7 @@ function Modal({title,onClose,children}){
 function BtnRow({onCancel,onConfirm,label,color}){
   return <div style={{display:"flex",gap:10}}>
     <button onClick={onCancel} style={{flex:1,padding:10,border:`1.5px solid ${P.border}`,borderRadius:8,background:P.white,cursor:"pointer",fontWeight:600,color:P.gray}}>Cancelar</button>
-    <button onClick={onConfirm} style={{flex:1,padding:10,background:color||P.gold,color:color===P.gold||!color?P.black:P.white,border:"none",borderRadius:8,fontWeight:700,cursor:"pointer"}}>{label}</button>
+    <button onClick={onConfirm} style={{flex:1,padding:10,background:color||P.gold,color:P.white,border:"none",borderRadius:8,fontWeight:700,cursor:"pointer"}}>{label}</button>
   </div>;
 }
 
@@ -144,6 +168,7 @@ function ReporteView({tasks,clients,users}){
         <button onClick={consultar} style={{flex:1,padding:"11px",background:P.black,color:P.gold,border:"none",borderRadius:8,fontWeight:700,fontSize:14,cursor:"pointer"}}>🔍 Consultar</button>
         {res&&res.length>0&&<button onClick={descargar} style={{flex:1,padding:"11px",background:P.gold,color:P.black,border:"none",borderRadius:8,fontWeight:700,fontSize:14,cursor:"pointer"}}>⬇️ Descargar Excel</button>}
       </div>
+      <p style={{fontSize:11,color:P.gray,margin:"8px 0 0"}}>💡 Sin fechas se muestran todos los registros incluyendo tareas en curso.</p>
     </div>
     {res&&<div style={{background:P.white,borderRadius:12,border:`1px solid ${P.border}`,padding:20}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}}>
@@ -186,7 +211,7 @@ function ReporteView({tasks,clients,users}){
   </div>;
 }
 
-export default function App(){
+function App(){
   const [users,setUsers]=useState(INIT_USERS);
   const [cur,setCur]=useState(null);
   const [lEmail,setLEmail]=useState("");
@@ -199,8 +224,6 @@ export default function App(){
   const [notifs,setNotifs]=useState([]);
   const [view,setView]=useState("board");
   const [,setTick]=useState(0);
-
-  // Modales
   const [showNT,setShowNT]=useState(false);
   const [showST,setShowST]=useState(null);
   const [showAv,setShowAv]=useState(false);
@@ -218,16 +241,13 @@ export default function App(){
   const [showObs,setShowObs]=useState(null);
   const [obsT,setObsT]=useState("");
   const [alert8,setAlert8]=useState([]);
-  const [showDel,setShowDel]=useState(null); // id tarea a eliminar
-
-  // Forms
+  const [showDel,setShowDel]=useState(null);
   const [nt,setNt]=useState({title:"",assignedTo:"",clientId:"",periodo:""});
   const [nst,setNst]=useState({title:"",assignedTo:""});
   const [cf,setCf]=useState({nombre:"",cargo:"",correo:"",telefono:""});
   const [clf,setClf]=useState({compania:"",tipoDevolucion:"",periodos:[""]});
 
   useEffect(()=>{const t=setInterval(()=>setTick(x=>x+1),1000);return()=>clearInterval(t);},[]);
-
   useEffect(()=>{
     const chk=()=>{
       const w=isWorkHour();
@@ -245,7 +265,6 @@ export default function App(){
     };
     const iv=setInterval(chk,60000);chk();return()=>clearInterval(iv);
   },[]);
-
   useEffect(()=>{
     if(!cur)return;
     const iv=setInterval(()=>{
@@ -307,11 +326,7 @@ export default function App(){
     setShowObs(null);setObsT("");
   };
 
-  // ── ELIMINAR TAREA ──
-  const eliminarTarea=()=>{
-    setTasks(prev=>prev.filter(t=>t.id!==showDel));
-    setShowDel(null);
-  };
+  const eliminarTarea=()=>{setTasks(prev=>prev.filter(t=>t.id!==showDel));setShowDel(null);};
 
   const addTask=()=>{
     if(!nt.title||!nt.assignedTo||!nt.clientId||!nt.periodo)return;
@@ -353,14 +368,12 @@ export default function App(){
     setCur({...cur,password:pf.nuevo});setPErr("");setPOk(true);
     setTimeout(()=>{setShowCP(false);setPOk(false);setPf({current:"",nuevo:"",confirm:""});},1500);
   };
-
   const doLogin=()=>{
     const u=users.find(u=>u.email.toLowerCase()===lEmail.toLowerCase());
     if(u&&u.password===lPass){setCur(u);setLErr("");}
     else setLErr("Correo o contraseña incorrectos.");
   };
 
-  // ── LOGIN ──
   if(!cur) return (
     <div style={{minHeight:"100vh",background:`linear-gradient(135deg,${P.black},${P.dark})`,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
       <div style={{background:P.white,borderRadius:16,padding:36,width:380,boxShadow:"0 20px 60px #00000066",border:`1px solid ${P.border}`}}>
@@ -386,7 +399,6 @@ export default function App(){
 
   return (
     <div style={{minHeight:"100vh",background:P.lightG}}>
-      {/* HEADER */}
       <div style={{background:P.black,borderBottom:`2px solid ${P.gold}`,padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <div style={{width:34,height:34,background:`linear-gradient(135deg,${P.goldD},${P.gold})`,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>⏱️</div>
@@ -407,7 +419,6 @@ export default function App(){
         </div>
       </div>
 
-      {/* NOTIFICACIONES */}
       {showNP&&<div style={{position:"fixed",top:62,right:14,width:320,background:P.white,borderRadius:14,boxShadow:"0 8px 32px #00000033",border:`1px solid ${P.border}`,zIndex:200,maxHeight:440,display:"flex",flexDirection:"column"}}>
         <div style={{padding:"12px 14px",borderBottom:`1px solid ${P.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",background:P.black,borderRadius:"14px 14px 0 0"}}>
           <span style={{fontWeight:800,color:P.gold,fontSize:14}}>🔔 Notificaciones</span>
@@ -428,7 +439,6 @@ export default function App(){
 
       <div style={{padding:20,maxWidth:1100,margin:"0 auto"}}>
 
-        {/* TABLERO */}
         {view==="board"&&<>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,flexWrap:"wrap",gap:8}}>
             <h2 style={{margin:0,color:P.black,fontSize:19,fontWeight:800}}>📋 Tablero de Tareas</h2>
@@ -443,14 +453,9 @@ export default function App(){
             return <div key={task.id} style={{background:P.white,borderRadius:12,border:`1.5px solid ${isP?P.goldD:isR?P.gold:P.border}`,padding:16,marginBottom:12,boxShadow:isR?`0 2px 12px ${P.gold}33`:isP?`0 2px 12px ${P.goldD}22`:"0 1px 4px #00000011"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
                 <div style={{flex:1,minWidth:180}}>
-                  {/* TÍTULO + BOTÓN ELIMINAR */}
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,gap:8}}>
                     <div style={{fontWeight:700,color:P.black,fontSize:14}}>{task.title}</div>
-                    <button
-                      onClick={()=>setShowDel(task.id)}
-                      style={{padding:"3px 10px",background:"#FEF2F2",color:P.danger,border:"1px solid #FECACA",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:12,flexShrink:0}}>
-                      🗑️
-                    </button>
+                    <button onClick={()=>setShowDel(task.id)} style={{padding:"3px 10px",background:"#FEF2F2",color:P.danger,border:"1px solid #FECACA",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:12,flexShrink:0}}>🗑️</button>
                   </div>
                   <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
                     <span style={{background:isD?"#DCFCE7":isP?"#FFF7ED":"#FDF6DC",color:isD?P.success:P.goldD,padding:"2px 8px",borderRadius:99,fontSize:11,fontWeight:600}}>{isD?"✅ Completada":isP?"⏸ Pausada":"▶ En progreso"}</span>
@@ -470,9 +475,7 @@ export default function App(){
                   </div>
                   <div style={{display:"flex",gap:5,flexWrap:"wrap",justifyContent:"flex-end"}}>
                     {!isD&&<button onClick={()=>sendRem(task)} style={{padding:"5px 9px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:7,cursor:"pointer",fontSize:12}}>🔔</button>}
-                    {!isD&&<button onClick={()=>togglePause(task.id)} style={{padding:"6px 10px",background:isP?P.success:P.danger,color:P.white,border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:11}}>
-                      {isP?"▶ Reanudar":"⏸ EVENTO NO RELACIONADO"}
-                    </button>}
+                    {!isD&&<button onClick={()=>togglePause(task.id)} style={{padding:"6px 10px",background:isP?P.success:P.danger,color:P.white,border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:11}}>{isP?"▶ Reanudar":"⏸ EVENTO NO RELACIONADO"}</button>}
                     {!isD&&isAssignee&&<button onClick={()=>iniciarComplete(task.id,null)} style={{padding:"6px 12px",background:P.gold,color:P.black,border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:12}}>✅ Completar</button>}
                     {!isD&&canSub&&<button onClick={()=>setShowST(task.id)} style={{padding:"6px 12px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:7,fontWeight:600,cursor:"pointer",fontSize:12}}>+ Sub-tarea</button>}
                     {!isD&&alert8.includes(task.id)&&<div style={{fontSize:10,color:P.danger,fontWeight:700,background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:6,padding:"3px 7px"}}>⚠️ +8h</div>}
@@ -498,7 +501,6 @@ export default function App(){
           })}
         </>}
 
-        {/* CLIENTES */}
         {view==="clients"&&<>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:8}}>
             <h2 style={{margin:0,color:P.black,fontSize:19,fontWeight:800}}>🏢 Clientes</h2>
@@ -526,7 +528,6 @@ export default function App(){
           </div>
         </>}
 
-        {/* COLABORADORES */}
         {view==="colabs"&&<>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:8}}>
             <h2 style={{margin:0,color:P.black,fontSize:19,fontWeight:800}}>👥 Colaboradores</h2>
@@ -563,7 +564,6 @@ export default function App(){
 
         {view==="report"&&<ReporteView tasks={tasks} clients={clients} users={users}/>}
 
-        {/* EQUIPO */}
         {view==="team"&&isJ&&<>
           <h2 style={{margin:"0 0 18px",color:P.black,fontSize:19,fontWeight:800}}>🏠 Vista del Equipo</h2>
           {ROLE_ORDER.filter(r=>r!=="jefe").map(r=>{
@@ -590,7 +590,6 @@ export default function App(){
         </>}
       </div>
 
-      {/* ── MODAL ELIMINAR TAREA ── */}
       {showDel&&(()=>{
         const t=tasks.find(t=>t.id===showDel);
         return <Modal title="🗑️ Eliminar Tarea" onClose={()=>setShowDel(null)}>
@@ -603,16 +602,14 @@ export default function App(){
         </Modal>;
       })()}
 
-      {/* MODAL EVENTO */}
       {showEv&&<Modal title="⏸ Evento No Relacionado a Proyecto" onClose={()=>setShowEv(null)}>
         <p style={{fontSize:13,color:P.gray,margin:"0 0 14px"}}>El cronómetro se pausará. Indica el nombre del evento:</p>
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Nombre del evento *</label>
-        <input value={evNombre} onChange={e=>setEvNombre(e.target.value)} onKeyDown={e=>e.key==="Enter"&&confirmarEv()} placeholder="Ej: Reunión administrativa, Capacitación..." style={iSt} autoFocus/>
+        <input value={evNombre} onChange={e=>setEvNombre(e.target.value)} onKeyDown={e=>e.key==="Enter"&&confirmarEv()} placeholder="Ej: Reunión administrativa..." style={iSt} autoFocus/>
         {!evNombre.trim()&&<p style={{fontSize:11,color:P.danger,margin:"-8px 0 10px"}}>* Campo obligatorio</p>}
         <BtnRow onCancel={()=>setShowEv(null)} onConfirm={confirmarEv} label="⏸ Pausar y registrar" color={P.danger}/>
       </Modal>}
 
-      {/* MODAL COMPLETAR */}
       {showObs&&(()=>{
         const t=tasks.find(t=>t.id===showObs.tid);
         const st=showObs.sid?t?.subtasks.find(s=>s.id===showObs.sid):null;
@@ -620,7 +617,7 @@ export default function App(){
         return <Modal title="✅ Completar Tarea" onClose={()=>setShowObs(null)}>
           <p style={{fontSize:13,color:P.gray,margin:"0 0 14px"}}>¿Alguna observación? <span style={{fontSize:12}}>(opcional)</span></p>
           <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Observación</label>
-          <textarea value={obsT} onChange={e=>setObsT(e.target.value)} placeholder="Ej: Se encontraron diferencias, cliente pendiente de documentos..." style={{...iSt,height:90,resize:"vertical"}}/>
+          <textarea value={obsT} onChange={e=>setObsT(e.target.value)} placeholder="Ej: Se encontraron diferencias..." style={{...iSt,height:90,resize:"vertical"}}/>
           <div style={{background:P.lightG,border:`1.5px solid ${P.gold}`,borderRadius:10,padding:12,marginBottom:14,textAlign:"center"}}>
             <div style={{fontSize:11,fontWeight:700,color:P.goldD,marginBottom:2}}>TIEMPO ACTIVO TRABAJADO</div>
             <div style={{fontSize:22,fontWeight:800,color:P.black,fontVariantNumeric:"tabular-nums"}}>{fmtT(ms)}</div>
@@ -630,7 +627,6 @@ export default function App(){
         </Modal>;
       })()}
 
-      {/* MODAL CONTRASEÑA */}
       {showCP&&<Modal title="🔑 Cambiar Contraseña" onClose={()=>{setShowCP(false);setPErr("");setPOk(false);setPf({current:"",nuevo:"",confirm:""});}}>
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Contraseña actual</label>
         <input value={pf.current} onChange={e=>setPf({...pf,current:e.target.value})} type="password" style={iSt}/>
@@ -640,10 +636,9 @@ export default function App(){
         <input value={pf.confirm} onChange={e=>setPf({...pf,confirm:e.target.value})} type="password" style={iSt}/>
         {pErr&&<div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:8,padding:"8px 12px",color:P.danger,fontSize:13,marginBottom:10}}>⚠️ {pErr}</div>}
         {pOk&&<div style={{background:"#F0FDF4",border:"1px solid #BBF7D0",borderRadius:8,padding:"8px 12px",color:P.success,fontSize:13,marginBottom:10}}>✅ ¡Actualizada!</div>}
-        <BtnRow onCancel={()=>{setShowCP(false);setPErr("");setPf({current:"",nuevo:"",confirm:"" });}} onConfirm={savePass} label="Guardar" color={P.black}/>
+        <BtnRow onCancel={()=>{setShowCP(false);setPErr("");setPf({current:"",nuevo:"",confirm:""});}} onConfirm={savePass} label="Guardar" color={P.black}/>
       </Modal>}
 
-      {/* MODAL COLABORADOR */}
       {showColF&&<Modal title={editCol?"✏️ Editar":"👤 Nuevo Colaborador"} onClose={()=>setShowColF(false)}>
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Nombre completo</label>
         <input value={cf.nombre} onChange={e=>setCf({...cf,nombre:e.target.value})} style={iSt}/>
@@ -656,7 +651,6 @@ export default function App(){
         <BtnRow onCancel={()=>setShowColF(false)} onConfirm={saveCol} label={editCol?"Guardar":"Agregar"} color={P.black}/>
       </Modal>}
 
-      {/* MODAL CLIENTE */}
       {showCF&&<Modal title={editCl?"✏️ Editar Cliente":"🏢 Nuevo Cliente"} onClose={()=>setShowCF(false)}>
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Compañía</label>
         <input value={clf.compania} onChange={e=>setClf({...clf,compania:e.target.value})} style={iSt}/>
@@ -674,7 +668,6 @@ export default function App(){
         <BtnRow onCancel={()=>setShowCF(false)} onConfirm={saveCl} label={editCl?"Guardar":"Crear"} color={P.black}/>
       </Modal>}
 
-      {/* MODAL NUEVA TAREA */}
       {showNT&&<Modal title="Nueva Tarea" onClose={()=>setShowNT(false)}>
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Actividad</label>
         <select value={nt.title} onChange={e=>setNt({...nt,title:e.target.value})} style={iSt}>
@@ -703,7 +696,6 @@ export default function App(){
         <BtnRow onCancel={()=>setShowNT(false)} onConfirm={addTask} label="Crear y arrancar ⏱️" color={P.black}/>
       </Modal>}
 
-      {/* MODAL SUB-TAREA */}
       {showST&&<Modal title="Agregar Sub-tarea" onClose={()=>setShowST(null)}>
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Actividad</label>
         <select value={nst.title} onChange={e=>setNst({...nst,title:e.target.value})} style={iSt}>
@@ -718,7 +710,6 @@ export default function App(){
         <BtnRow onCancel={()=>setShowST(null)} onConfirm={()=>addSub(showST)} label="Asignar ⏱️" color={P.black}/>
       </Modal>}
 
-      {/* MODAL AVATAR */}
       {showAv&&<Modal title="Elige tu Avatar" onClose={()=>setShowAv(false)}>
         <p style={{fontSize:13,color:P.gray,margin:"0 0 12px"}}>Haz clic en el avatar que más te guste 👇</p>
         <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:7,marginBottom:14}}>
@@ -729,3 +720,8 @@ export default function App(){
     </div>
   );
 }
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
