@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>TimeTrack Pro — Census Consultores</title>
   <meta name="theme-color" content="#0F0F0F"/>
-  <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-title" content="TimeTrack"/>
   <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
@@ -19,29 +17,29 @@
     ::-webkit-scrollbar-thumb{background:#C9A84C;border-radius:99px;}
     @keyframes spin{to{transform:rotate(360deg)}}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
 <body>
 <div id="root"></div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import{getFirestore,collection,onSnapshot,doc,setDoc,deleteDoc}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   const cfg={apiKey:"AIzaSyAxFiWMwOlF-Sh5AWjdSrUgXxyxyM27hvQ",authDomain:"timetrack-census.firebaseapp.com",projectId:"timetrack-census",storageBucket:"timetrack-census.firebasestorage.app",messagingSenderId:"43634290060",appId:"1:43634290060:web:36c8013016d589a6af3aa9"};
-  const app=initializeApp(cfg);
-  const db=getFirestore(app);
+  const app=initializeApp(cfg);const db=getFirestore(app);
   window._db=db;window._col=collection;window._snap=onSnapshot;window._doc=doc;window._set=setDoc;window._del=deleteDoc;window._fbReady=true;
   window.dispatchEvent(new Event("fb-ready"));
 </script>
 
 <script type="text/babel">
-const{useState,useEffect}=React;
+const{useState,useEffect,useRef}=React;
 
 const TASKS_LIST=["Elaboración de pruebas","Seguimiento","Revisión de pruebas","Levantamiento y desarrollo de análisis inicial","Revisión de análisis","Reunión interna","Reunión externa","Gestión de documentos (entrega y recepción)","Gestión de documentos archivo"];
 const TIPOS_DEVOLUCION=["Devolución de IVA Exportador","Devolución de IVA Proveedor Directo","Devolución Retenciones de IVA","Devolución de IVA - Interes Social","Devolución de IVA - Proyectos Inmobiliarios","Renta - Pago indebido","Renta - Pago en exceso","Otros pagos indebidos o en exceso"];
 const AVATARS=["👩‍💼","👨‍💼","👩‍💻","👨‍💻","👩‍🔬","👨‍🔬","👩‍🎓","👨‍🎓","🧑‍💼","👩‍🏫","👨‍🏫","🦸‍♀️","🦸‍♂️","🧙‍♀️","🧙‍♂️","🐱","🦊","🐼","🐨","🦁","🐯","🦋","🌟","⚡","🔥","🌈","🎯","🚀","💎","🌸"];
 
-const P={gold:"#C9A84C",goldL:"#F0D080",goldD:"#8B6914",black:"#0F0F0F",dark:"#1A1A1A",gray:"#4A4A4A",lightG:"#F5F5F0",border:"#D4A843",white:"#FFFFFF",danger:"#C0392B",success:"#2E7D32",urgent:"#7B2D8B"};
+const P={gold:"#C9A84C",goldL:"#F0D080",goldD:"#8B6914",black:"#0F0F0F",dark:"#1A1A1A",gray:"#4A4A4A",lightG:"#F5F5F0",border:"#D4A843",white:"#FFFFFF",danger:"#C0392B",success:"#2E7D32",urgent:"#7B2D8B",ai:"#0EA5E9"};
 
 const ROLES={jefe:{label:"💼 Jefe",color:P.black,bg:"#F0E8C8"},coordinadora:{label:"👑 Coordinador",color:P.goldD,bg:"#FDF6DC"},senior:{label:"🔵 Senior",color:"#1A4A7A",bg:"#D6E8F7"},semsenior:{label:"🟡 Semi Senior",color:"#7A4A00",bg:"#FFF0CC"},junior:{label:"🟢 Junior",color:"#1A5C2A",bg:"#D6F0DC"}};
 const ROLE_ORDER=["jefe","coordinadora","senior","semsenior","junior"];
@@ -77,7 +75,6 @@ const INIT_USERS=[
 const ts=()=>Date.now();
 const msToH=ms=>Math.round((ms/3600000)*100)/100;
 const fmtT=ms=>{const s=Math.floor(ms/1000),m=Math.floor(s/60),h=Math.floor(m/60);return h>0?`${h}h ${m%60}m ${s%60}s`:m>0?`${m}m ${s%60}s`:`${s}s`;};
-// status: inprogress | paused | done | queued
 const mkTask=o=>({id:"t"+ts(),status:"inprogress",startedAt:ts(),pausedAt:null,activeMs:0,completedAt:null,hours:null,autopaused:false,observacion:null,eventoNombre:null,urgente:false,subtasks:[],...o});
 const liveMs=i=>(i.status==="done"||i.status==="paused"||i.status==="queued")?i.activeMs:i.activeMs+(ts()-i.startedAt);
 const isWorkHour=()=>{const t=new Date().getHours()*60+new Date().getMinutes();return t>=540&&t<1050;};
@@ -87,71 +84,189 @@ const rl=r=>ROLES[r]?.label||r;
 const rBadge=r=>({background:rbg(r),color:rc(r),border:`1px solid ${rc(r)}44`,padding:"2px 8px",borderRadius:99,fontSize:11,fontWeight:700,display:"inline-block"});
 const iSt={width:"100%",marginTop:4,marginBottom:12,padding:"9px 10px",border:`1.5px solid ${P.border}`,borderRadius:7,fontSize:13,boxSizing:"border-box",outline:"none",background:P.white};
 
-// Firebase helpers
 const fbSet=async(col,id,data)=>{if(!window._db)return;try{await window._set(window._doc(window._db,col,String(id)),data);}catch(e){console.error(e);}};
 const fbDel=async(col,id)=>{if(!window._db)return;try{await window._del(window._doc(window._db,col,String(id)));}catch(e){console.error(e);}};
 
-function Modal({title,onClose,children}){
-  return <div style={{position:"fixed",inset:0,background:"#00000077",display:"flex",alignItems:"center",justifyContent:"center",zIndex:999}}>
-    <div style={{background:P.white,borderRadius:14,padding:24,width:480,maxWidth:"95vw",boxShadow:"0 8px 32px #00000044",maxHeight:"92vh",overflowY:"auto",border:`1px solid ${P.border}`}}>
-      {title&&<h3 style={{margin:"0 0 14px",color:P.black,borderBottom:`2px solid ${P.gold}`,paddingBottom:8}}>{title}</h3>}
+function Modal({title,onClose,children,wide}){
+  return <div style={{position:"fixed",inset:0,background:"#00000077",display:"flex",alignItems:"center",justifyContent:"center",zIndex:999,padding:8}}>
+    <div style={{background:P.white,borderRadius:14,padding:24,width:wide?560:480,maxWidth:"95vw",boxShadow:"0 8px 32px #00000044",maxHeight:"92vh",overflowY:"auto",border:`1px solid ${P.border}`,animation:"fadeIn .18s ease"}}>
+      {title&&<h3 style={{margin:"0 0 14px",color:P.black,borderBottom:`2px solid ${P.gold}`,paddingBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <span>{title}</span>
+        <button onClick={onClose} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",color:P.gray,lineHeight:1}}>×</button>
+      </h3>}
       {children}
     </div>
   </div>;
 }
-function BtnRow({onCancel,onConfirm,label,color}){
+function BtnRow({onCancel,onConfirm,label,color,disabled}){
   return <div style={{display:"flex",gap:10}}>
     <button onClick={onCancel} style={{flex:1,padding:10,border:`1.5px solid ${P.border}`,borderRadius:8,background:P.white,cursor:"pointer",fontWeight:600,color:P.gray}}>Cancelar</button>
-    <button onClick={onConfirm} style={{flex:1,padding:10,background:color||P.gold,color:P.white,border:"none",borderRadius:8,fontWeight:700,cursor:"pointer"}}>{label}</button>
+    <button onClick={onConfirm} disabled={disabled} style={{flex:1,padding:10,background:disabled?"#ccc":color||P.gold,color:P.white,border:"none",borderRadius:8,fontWeight:700,cursor:disabled?"not-allowed":"pointer",opacity:disabled?0.7:1}}>{label}</button>
   </div>;
 }
 
+// ── AGENTE IA ──────────────────────────────────────────────────────────────
+function AgenteIA({cur,users,clients,tasks,onCrear,onClose}){
+  const [input,setInput]=useState("");
+  const [loading,setLoading]=useState(false);
+  const [resultado,setResultado]=useState(null);
+  const [err,setErr]=useState("");
+  const role=cur?.role;
+  const assignTo=!cur?[]:users.filter(u=>u.id!==cur.id&&(CAN_ASSIGN_TO[role]||[]).includes(u.role));
+
+  const analizar=async()=>{
+    if(!input.trim())return;
+    setLoading(true);setErr("");setResultado(null);
+    const clientList=clients.map(c=>`- ID:"${c.id}" Empresa:"${c.compania}" Tipos:[${(c.tiposDevolucion||[]).join(", ")}] Periodos:[${(c.periodos||[]).join(", ")}]`).join("\n");
+    const userList=assignTo.map(u=>`- ID:"${u.id}" Nombre:"${u.firstName} ${u.lastName}" Rol:${u.role}`).join("\n");
+    const prompt=`Eres un asistente de gestión de tareas para Census Consultores (firma tributaria en Ecuador).
+Analiza la solicitud y devuelve SOLO un JSON sin markdown ni texto extra con esta estructura exacta:
+{"title":"<actividad exacta del listado>","assignedTo":"<id usuario>","clientId":"<id cliente>","tipoDevolucion":"<tipo exacto>","periodo":"<periodo exacto>","urgente":<true|false>,"explicacion":"<breve explicación en español>"}
+
+ACTIVIDADES DISPONIBLES (usa exactamente una de estas):
+${TASKS_LIST.map((t,i)=>`${i+1}. ${t}`).join("\n")}
+
+CLIENTES DISPONIBLES:
+${clientList||"Sin clientes registrados"}
+
+USUARIOS DISPONIBLES (a quienes puedes asignar):
+${userList||"Sin usuarios"}
+
+REGLAS:
+- "title" debe ser EXACTAMENTE uno de los textos del listado de actividades.
+- Si la solicitud menciona "urgente", "urgencia", "prioritario" → urgente:true.
+- Si no puedes identificar cliente/usuario/tipo/periodo con certeza, usa "" para ese campo.
+- Responde SOLO el JSON.
+
+SOLICITUD: "${input.trim()}"`;
+    try{
+      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
+      const data=await res.json();
+      const txt=data.content?.map(c=>c.text||"").join("").trim();
+      const clean=txt.replace(/```json|```/g,"").trim();
+      const parsed=JSON.parse(clean);
+      setResultado(parsed);
+    }catch(e){setErr("No pude interpretar la solicitud. Intenta ser más específico.");}
+    setLoading(false);
+  };
+
+  const confirmar=()=>{
+    if(!resultado)return;
+    onCrear(resultado);
+  };
+
+  const cl=resultado?clients.find(c=>String(c.id)===String(resultado.clientId)):null;
+  const usr=resultado?users.find(u=>String(u.id)===String(resultado.assignedTo)):null;
+
+  return <Modal title="🤖 Agente IA — Crear Tarea" onClose={onClose} wide>
+    <p style={{fontSize:13,color:P.gray,margin:"0 0 12px"}}>Describe la tarea con tus propias palabras y la IA la estructurará automáticamente.</p>
+    <label style={{fontSize:13,fontWeight:600,color:P.dark}}>¿Qué tarea necesitas crear?</label>
+    <textarea value={input} onChange={e=>setInput(e.target.value)} placeholder='Ej: "Necesito que Daniel Salazar haga la elaboración de pruebas para Empresa ABC del periodo Enero 2025, es urgente"' style={{...iSt,height:90,resize:"vertical",marginBottom:10}}/>
+    <button onClick={analizar} disabled={loading||!input.trim()} style={{width:"100%",padding:"11px",background:loading?"#7CC8F5":P.ai,color:P.white,border:"none",borderRadius:8,fontWeight:700,fontSize:14,cursor:loading?"not-allowed":"pointer",marginBottom:14,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+      {loading?<><div style={{width:16,height:16,border:"2px solid #fff",borderTop:"2px solid transparent",borderRadius:"50%",animation:"spin .8s linear infinite"}}></div>Analizando...</>:"✨ Analizar con IA"}
+    </button>
+    {err&&<div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:8,padding:"8px 12px",color:P.danger,fontSize:13,marginBottom:12}}>⚠️ {err}</div>}
+    {resultado&&<div style={{background:"#F0F9FF",border:`1.5px solid ${P.ai}`,borderRadius:10,padding:16,marginBottom:14,animation:"fadeIn .2s ease"}}>
+      <div style={{fontSize:13,fontWeight:800,color:P.ai,marginBottom:10}}>✅ Tarea identificada</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+        {[
+          {l:"📋 Actividad",v:resultado.title||"—"},
+          {l:"👤 Asignado a",v:usr?`${usr.avatar} ${usr.firstName} ${usr.lastName}`:"—"},
+          {l:"🏢 Cliente",v:cl?.compania||"—"},
+          {l:"📄 Tipo devolución",v:resultado.tipoDevolucion||"—"},
+          {l:"📅 Periodo",v:resultado.periodo||"—"},
+          {l:"⚡ Urgente",v:resultado.urgente?"Sí":"No"},
+        ].map(({l,v})=><div key={l} style={{background:P.white,borderRadius:7,padding:"7px 10px",border:`1px solid ${P.border}`}}>
+          <div style={{fontSize:10,fontWeight:700,color:P.goldD}}>{l}</div>
+          <div style={{fontSize:12,fontWeight:600,color:P.black,marginTop:2}}>{v}</div>
+        </div>)}
+      </div>
+      {resultado.explicacion&&<div style={{fontSize:12,color:P.gray,background:P.lightG,borderRadius:7,padding:"7px 10px",marginBottom:10,border:`1px solid ${P.border}`}}>💬 {resultado.explicacion}</div>}
+      {(!resultado.title||!resultado.assignedTo||!resultado.clientId||!resultado.tipoDevolucion||!resultado.periodo)&&
+        <div style={{background:"#FFF8E7",border:`1px solid ${P.border}`,borderRadius:7,padding:"7px 10px",color:P.goldD,fontSize:12,marginBottom:6}}>
+          ⚠️ Algunos campos no pudieron identificarse. Puedes editar manualmente después de crear.
+        </div>}
+      <BtnRow onCancel={()=>setResultado(null)} onConfirm={confirmar} label="✅ Crear esta tarea" color={P.black} disabled={!resultado.title||!resultado.assignedTo}/>
+    </div>}
+  </Modal>;
+}
+
+// ── EDITAR COLABORADOR ────────────────────────────────────────────────────
+function EditColabModal({user,onSave,onClose}){
+  const [f,setF]=useState({firstName:user.firstName,lastName:user.lastName,email:user.email,password:user.password,role:user.role,avatar:user.avatar});
+  const [showAv,setShowAv]=useState(false);
+  const save=()=>{
+    if(!f.firstName.trim()||!f.lastName.trim()||!f.email.trim())return;
+    onSave({...user,...f,name:`${f.firstName} ${f.lastName}`});
+  };
+  return <Modal title={`✏️ Editar — ${user.firstName} ${user.lastName}`} onClose={onClose}>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:4}}>
+      <div>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Nombre</label>
+        <input value={f.firstName} onChange={e=>setF({...f,firstName:e.target.value})} style={iSt}/>
+      </div>
+      <div>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Apellido</label>
+        <input value={f.lastName} onChange={e=>setF({...f,lastName:e.target.value})} style={iSt}/>
+      </div>
+    </div>
+    <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Correo</label>
+    <input value={f.email} onChange={e=>setF({...f,email:e.target.value})} type="email" style={iSt}/>
+    <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Contraseña</label>
+    <input value={f.password} onChange={e=>setF({...f,password:e.target.value})} type="text" style={iSt}/>
+    <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Rol</label>
+    <select value={f.role} onChange={e=>setF({...f,role:e.target.value})} style={iSt}>
+      {ROLE_ORDER.map(r=><option key={r} value={r}>{rl(r)}</option>)}
+    </select>
+    <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Avatar</label>
+    <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:12,marginTop:4}}>
+      <div style={{width:44,height:44,borderRadius:10,background:rbg(f.role),border:`2px solid ${P.gold}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>{f.avatar}</div>
+      <button onClick={()=>setShowAv(v=>!v)} style={{padding:"7px 14px",background:P.lightG,border:`1.5px solid ${P.border}`,borderRadius:8,cursor:"pointer",fontWeight:600,fontSize:12,color:P.dark}}>🎨 Cambiar avatar</button>
+    </div>
+    {showAv&&<div style={{display:"grid",gridTemplateColumns:"repeat(8,1fr)",gap:5,marginBottom:12,background:P.lightG,borderRadius:8,padding:10,border:`1px solid ${P.border}`}}>
+      {AVATARS.map(a=><div key={a} onClick={()=>{setF(v=>({...v,avatar:a}));setShowAv(false);}} style={{fontSize:22,textAlign:"center",padding:5,borderRadius:7,cursor:"pointer",background:f.avatar===a?P.white:"transparent",border:`2px solid ${f.avatar===a?P.gold:"transparent"}`}}>{a}</div>)}
+    </div>}
+    <BtnRow onCancel={onClose} onConfirm={save} label="💾 Guardar cambios" color={P.black}/>
+  </Modal>;
+}
+
+// ── REPORTE ────────────────────────────────────────────────────────────────
 function ReporteView({tasks,clients,users}){
-  const [desde,setDesde]=useState("");
-  const [hasta,setHasta]=useState("");
-  const [res,setRes]=useState(null);
+  const[desde,setDesde]=useState("");
+  const[hasta,setHasta]=useState("");
+  const[res,setRes]=useState(null);
   const gC=id=>clients.find(c=>String(c.id)===String(id));
   const gU=id=>users.find(u=>String(u.id)===String(id));
-
   const consultar=()=>{
-    const d=desde?new Date(desde+" 00:00:00"):null;
-    const h=hasta?new Date(hasta+" 23:59:59"):null;
-    const filas=[];const ahora=Date.now();
+    const d=desde?new Date(desde+" 00:00:00"):null,h=hasta?new Date(hasta+" 23:59:59"):null,filas=[],ahora=Date.now();
     tasks.forEach(t=>{
       const fecha=t.completedAt?new Date(t.completedAt):new Date(ahora);
       if(d&&fecha<d)return;if(h&&fecha>h)return;
-      const cl=gC(t.clientId);
-      const tramite=cl?`${cl.compania} | ${t.tipoDevolucion||""} | ${t.periodo||""}`:"Sin trámite";
+      const cl=gC(t.clientId),tramite=cl?`${cl.compania} | ${t.tipoDevolucion||""} | ${t.periodo||""}`:"Sin trámite";
       const persona=gU(t.assignedTo);
-      const horasActivas=t.status==="done"?(t.hours||0):msToH(t.status==="paused"||t.status==="queued"?t.activeMs:t.activeMs+(ahora-t.startedAt));
-      const horasPausa=t.eventoNombre?msToH(Math.max(0,(t.status==="done"?t.completedAt:ahora)-t.startedAt-t.activeMs)):0;
+      const ha=t.status==="done"?(t.hours||0):msToH(t.status==="paused"||t.status==="queued"?t.activeMs:t.activeMs+(ahora-t.startedAt));
       const estado=t.status==="done"?"Completada":t.status==="paused"?"Pausada":t.status==="queued"?"En cola":"En progreso";
-      filas.push({tramite,nombre:persona?.name||"—",horas:horasActivas,actividad:t.title,eventoNombre:"—",horasPausa:0,observacion:t.observacion||"—",fecha:t.completedAt?new Date(t.completedAt).toLocaleDateString("es-EC"):"En curso",estado,urgente:t.urgente?"⚡ Urgente":""});
-      if(t.eventoNombre)filas.push({tramite:"No relacionado a proyecto",nombre:persona?.name||"—",horas:0,actividad:"Evento No Relacionado",eventoNombre:t.eventoNombre,horasPausa,observacion:"—",fecha:t.completedAt?new Date(t.completedAt).toLocaleDateString("es-EC"):"En curso",estado,urgente:""});
+      filas.push({tramite,nombre:persona?.name||"—",horas:ha,actividad:t.title,eventoNombre:t.eventoNombre||"—",horasPausa:0,observacion:t.observacion||"—",fecha:t.completedAt?new Date(t.completedAt).toLocaleDateString("es-EC"):"En curso",estado,urgente:t.urgente?"⚡":""});
       (t.subtasks||[]).forEach(st=>{
         const sf=st.completedAt?new Date(st.completedAt):new Date(ahora);
         if(d&&sf<d)return;if(h&&sf>h)return;
         const sp=gU(st.assignedTo);
         const stH=st.status==="done"?(st.hours||0):msToH(st.status==="paused"?st.activeMs:st.activeMs+(ahora-st.startedAt));
-        const stP=st.eventoNombre?msToH(Math.max(0,(st.status==="done"?st.completedAt:ahora)-st.startedAt-st.activeMs)):0;
         const stE=st.status==="done"?"Completada":st.status==="paused"?"Pausada":"En progreso";
         filas.push({tramite,nombre:sp?.name||"—",horas:stH,actividad:st.title,eventoNombre:"—",horasPausa:0,observacion:st.observacion||"—",fecha:st.completedAt?new Date(st.completedAt).toLocaleDateString("es-EC"):"En curso",estado:stE,urgente:""});
-        if(st.eventoNombre)filas.push({tramite:"No relacionado a proyecto",nombre:sp?.name||"—",horas:0,actividad:"Evento No Relacionado",eventoNombre:st.eventoNombre,horasPausa:stP,observacion:"—",fecha:st.completedAt?new Date(st.completedAt).toLocaleDateString("es-EC"):"En curso",estado:stE,urgente:""});
       });
     });
     setRes(filas);
   };
-
   const descargar=()=>{
     if(!res||!res.length)return;
     const hdrs=["Trámite","Nombre","Horas Trabajadas","Actividad","Evento No Relacionado","Horas Pausa","Observación","Fecha","Estado","Urgente"];
     const rows=[hdrs,...res.map(r=>[r.tramite,r.nombre,r.horas,r.actividad,r.eventoNombre,r.horasPausa,r.observacion,r.fecha,r.estado,r.urgente])];
     const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
     const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");a.href=url;a.download=`reporte_census_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url);
+    const url=URL.createObjectURL(blob),a=document.createElement("a");
+    a.href=url;a.download=`reporte_census_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url);
   };
-
   const total=res?res.reduce((s,r)=>s+r.horas,0):0;
   return <div>
     <h2 style={{margin:"0 0 20px",color:P.black,fontSize:19,fontWeight:800}}>📊 Reporte de Horas</h2>
@@ -162,8 +277,8 @@ function ReporteView({tasks,clients,users}){
         <div><label style={{fontSize:13,fontWeight:600,color:P.dark,display:"block",marginBottom:4}}>Hasta</label><input type="date" value={hasta} onChange={e=>setHasta(e.target.value)} style={{...iSt,marginBottom:0}}/></div>
       </div>
       <div style={{display:"flex",gap:10}}>
-        <button onClick={consultar} style={{flex:1,padding:"11px",background:P.black,color:P.gold,border:"none",borderRadius:8,fontWeight:700,fontSize:14,cursor:"pointer"}}>🔍 Consultar</button>
-        {res&&res.length>0&&<button onClick={descargar} style={{flex:1,padding:"11px",background:P.gold,color:P.black,border:"none",borderRadius:8,fontWeight:700,fontSize:14,cursor:"pointer"}}>⬇️ Descargar Excel</button>}
+        <button onClick={consultar} style={{flex:1,padding:11,background:P.black,color:P.gold,border:"none",borderRadius:8,fontWeight:700,fontSize:14,cursor:"pointer"}}>🔍 Consultar</button>
+        {res&&res.length>0&&<button onClick={descargar} style={{flex:1,padding:11,background:P.gold,color:P.black,border:"none",borderRadius:8,fontWeight:700,fontSize:14,cursor:"pointer"}}>⬇️ Descargar CSV</button>}
       </div>
     </div>
     {res&&<div style={{background:P.white,borderRadius:12,border:`1px solid ${P.border}`,padding:20}}>
@@ -178,19 +293,14 @@ function ReporteView({tasks,clients,users}){
       :<div style={{overflowX:"auto"}}>
         <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
           <thead><tr style={{background:P.black}}>
-            {["Trámite","Nombre","Actividad","Horas","Evento","Hrs Pausa","Observación","Fecha","Estado"].map(h=><th key={h} style={{padding:"10px 10px",textAlign:"left",fontWeight:700,color:P.gold,whiteSpace:"nowrap"}}>{h}</th>)}
+            {["Trámite","Nombre","Actividad","Horas","Evento","Observación","Fecha","Estado"].map(h=><th key={h} style={{padding:"10px",textAlign:"left",fontWeight:700,color:P.gold,whiteSpace:"nowrap"}}>{h}</th>)}
           </tr></thead>
-          <tbody>{res.map((r,i)=><tr key={i} style={{borderBottom:`1px solid ${P.border}44`,background:r.tramite==="No relacionado a proyecto"?"#FFF8E7":i%2===0?P.white:P.lightG}}>
-            <td style={{padding:"9px 10px"}}>
-              {r.tramite==="No relacionado a proyecto"
-                ?<span style={{fontSize:11,fontWeight:700,color:P.danger}}>📌 No relacionado</span>
-                :<div><div style={{fontWeight:600,color:P.black,fontSize:11}}>{r.tramite.split(" | ")[0]}</div><div style={{fontSize:10,color:P.goldD}}>{r.tramite.split(" | ")[1]}</div><div style={{fontSize:10,color:P.gray}}>📅 {r.tramite.split(" | ")[2]}</div></div>}
-            </td>
+          <tbody>{res.map((r,i)=><tr key={i} style={{borderBottom:`1px solid ${P.border}44`,background:i%2===0?P.white:P.lightG}}>
+            <td style={{padding:"9px 10px",fontSize:11}}><div style={{fontWeight:600,color:P.black}}>{r.tramite.split(" | ")[0]}</div><div style={{fontSize:10,color:P.goldD}}>{r.tramite.split(" | ")[1]}</div></td>
             <td style={{padding:"9px 10px",fontWeight:600,color:P.dark,whiteSpace:"nowrap"}}>{r.nombre}</td>
             <td style={{padding:"9px 10px",color:P.gray}}>{r.actividad}</td>
             <td style={{padding:"9px 10px",fontWeight:800,color:P.goldD,whiteSpace:"nowrap"}}>{r.horas>0?`${r.horas}h`:"—"}</td>
             <td style={{padding:"9px 10px",color:r.eventoNombre!=="—"?P.danger:P.gray,fontSize:11}}>{r.eventoNombre}</td>
-            <td style={{padding:"9px 10px",color:r.horasPausa>0?P.danger:P.gray,whiteSpace:"nowrap"}}>{r.horasPausa>0?`${r.horasPausa}h`:"—"}</td>
             <td style={{padding:"9px 10px",color:P.gray,fontSize:11,maxWidth:130}}>{r.observacion}</td>
             <td style={{padding:"9px 10px",color:P.gray,fontSize:11,whiteSpace:"nowrap"}}>{r.fecha}</td>
             <td style={{padding:"9px 10px",whiteSpace:"nowrap"}}>
@@ -200,53 +310,52 @@ function ReporteView({tasks,clients,users}){
             </td>
           </tr>)}</tbody>
         </table>
-        <button onClick={descargar} style={{width:"100%",marginTop:14,padding:"11px",background:P.gold,color:P.black,border:"none",borderRadius:8,fontWeight:700,fontSize:14,cursor:"pointer"}}>⬇️ Descargar Excel ({res.length} registros)</button>
       </div>}
     </div>}
   </div>;
 }
 
+// ── APP PRINCIPAL ──────────────────────────────────────────────────────────
 function App(){
-  const [users,setUsers]=useState(INIT_USERS);
-  const [cur,setCur]=useState(null);
-  const [lEmail,setLEmail]=useState("");
-  const [lPass,setLPass]=useState("");
-  const [showPass,setShowPass]=useState(false);
-  const [lErr,setLErr]=useState("");
-  const [tasks,setTasks]=useState([]);
-  const [clients,setClients]=useState([]);
-  const [notifs,setNotifs]=useState([]);
-  const [view,setView]=useState("board");
-  const [,setTick]=useState(0);
-  const [fbReady,setFbReady]=useState(false);
-  const [loading,setLoading]=useState(true);
+  const[users,setUsers]=useState(INIT_USERS);
+  const[cur,setCur]=useState(null);
+  const[lEmail,setLEmail]=useState("");
+  const[lPass,setLPass]=useState("");
+  const[showPass,setShowPass]=useState(false);
+  const[lErr,setLErr]=useState("");
+  const[tasks,setTasks]=useState([]);
+  const[clients,setClients]=useState([]);
+  const[notifs,setNotifs]=useState([]);
+  const[view,setView]=useState("board");
+  const[,setTick]=useState(0);
+  const[fbReady,setFbReady]=useState(false);
+  const[loading,setLoading]=useState(true);
 
-  const [showNT,setShowNT]=useState(false);
-  const [showST,setShowST]=useState(null);
-  const [showAv,setShowAv]=useState(false);
-  const [showNP,setShowNP]=useState(false);
-  const [showCF,setShowCF]=useState(false);
-  const [editCl,setEditCl]=useState(null);
-  const [showCP,setShowCP]=useState(false);
-  const [pf,setPf]=useState({current:"",nuevo:"",confirm:""});
-  const [pErr,setPErr]=useState("");
-  const [pOk,setPOk]=useState(false);
-  const [showEv,setShowEv]=useState(null);
-  const [evNombre,setEvNombre]=useState("");
-  const [showObs,setShowObs]=useState(null);
-  const [obsT,setObsT]=useState("");
-  const [alert8,setAlert8]=useState([]);
-  const [showDel,setShowDel]=useState(null);
-  const [nt,setNt]=useState({title:"",assignedTo:"",clientId:"",tipoDevolucion:"",periodo:"",urgente:false});
-  const [nst,setNst]=useState({title:"",assignedTo:""});
-  const [clf,setClf]=useState({compania:"",tiposDevolucion:[],periodos:[""]});
+  // modales
+  const[showNT,setShowNT]=useState(false);
+  const[showAI,setShowAI]=useState(false);
+  const[showST,setShowST]=useState(null);
+  const[showAv,setShowAv]=useState(false);
+  const[showNP,setShowNP]=useState(false);
+  const[showCF,setShowCF]=useState(false);
+  const[editCl,setEditCl]=useState(null);
+  const[showCP,setShowCP]=useState(false);
+  const[pf,setPf]=useState({current:"",nuevo:"",confirm:""});
+  const[pErr,setPErr]=useState("");
+  const[pOk,setPOk]=useState(false);
+  const[showEv,setShowEv]=useState(null);
+  const[evNombre,setEvNombre]=useState("");
+  const[showObs,setShowObs]=useState(null);
+  const[obsT,setObsT]=useState("");
+  const[showDel,setShowDel]=useState(null);
+  const[editColab,setEditColab]=useState(null); // nuevo: editar colaborador
+  const[showPause,setShowPause]=useState(null); // nuevo: confirm pausa manual
+  const[nt,setNt]=useState({title:"",assignedTo:"",clientId:"",tipoDevolucion:"",periodo:"",urgente:false});
+  const[nst,setNst]=useState({title:"",assignedTo:""});
+  const[clf,setClf]=useState({compania:"",tiposDevolucion:[],periodos:[""]});
 
   useEffect(()=>{const t=setInterval(()=>setTick(x=>x+1),1000);return()=>clearInterval(t);},[]);
-
-  useEffect(()=>{
-    if(window._fbReady){setFbReady(true);return;}
-    window.addEventListener("fb-ready",()=>setFbReady(true),{once:true});
-  },[]);
+  useEffect(()=>{if(window._fbReady){setFbReady(true);return;}window.addEventListener("fb-ready",()=>setFbReady(true),{once:true});},[]);
 
   useEffect(()=>{
     if(!fbReady)return;
@@ -269,8 +378,8 @@ function App(){
     const chk=()=>{
       const w=isWorkHour();
       tasks.forEach(t=>{
-        if(!w&&t.status==="inprogress"){const u={...t,status:"paused",activeMs:t.activeMs+(ts()-t.startedAt),pausedAt:ts(),autopaused:true};fbSet("tasks",t.id,u);}
-        if(w&&t.status==="paused"&&t.autopaused){const u={...t,status:"inprogress",startedAt:ts(),pausedAt:null,autopaused:false};fbSet("tasks",t.id,u);}
+        if(!w&&t.status==="inprogress"){fbSet("tasks",t.id,{...t,status:"paused",activeMs:t.activeMs+(ts()-t.startedAt),pausedAt:ts(),autopaused:true});}
+        if(w&&t.status==="paused"&&t.autopaused){fbSet("tasks",t.id,{...t,status:"inprogress",startedAt:ts(),pausedAt:null,autopaused:false});}
       });
     };
     const iv=setInterval(chk,60000);return()=>clearInterval(iv);
@@ -294,43 +403,43 @@ function App(){
     return tasks.filter(t=>String(t.assignedTo)===String(cur.id));
   };
 
-  // ── COLA: verificar si el asignado tiene tarea activa ──
   const hasActiveTask=uid=>tasks.some(t=>String(t.assignedTo)===String(uid)&&t.status==="inprogress");
 
-  // ── COLA: cuando se completa una tarea, arrancar la siguiente en cola ──
   const startNextQueued=async(uid)=>{
     const queued=tasks.filter(t=>String(t.assignedTo)===String(uid)&&t.status==="queued")
       .sort((a,b)=>(b.urgente?1:0)-(a.urgente?1:0)||(a.id>b.id?1:-1));
     if(queued.length>0){
       const next={...queued[0],status:"inprogress",startedAt:ts()};
       await fbSet("tasks",next.id,next);
-      pushN(uid,`Tu siguiente tarea ha iniciado automáticamente`,"nueva",next.title);
+      pushN(uid,"Tu siguiente tarea ha iniciado automáticamente","nueva",next.title);
     }
   };
 
   const updTask=async(tid,sid,fn)=>{
-    const task=tasks.find(t=>String(t.id)===String(tid));
-    if(!task)return;
+    const task=tasks.find(t=>String(t.id)===String(tid));if(!task)return;
     const updated=sid?{...task,subtasks:(task.subtasks||[]).map(s=>String(s.id)===String(sid)?fn(s):s)}:fn(task);
     await fbSet("tasks",tid,updated);
   };
 
-  // ── MARCAR URGENTE ──
   const toggleUrgente=async(tid)=>{
-    const task=tasks.find(t=>String(t.id)===String(tid));
-    if(!task)return;
-    const updated={...task,urgente:!task.urgente};
-    await fbSet("tasks",tid,updated);
+    const task=tasks.find(t=>String(t.id)===String(tid));if(!task)return;
+    await fbSet("tasks",tid,{...task,urgente:!task.urgente});
   };
 
-  const togglePause=async(tid,sid=null)=>{
-    const task=tasks.find(t=>String(t.id)===String(tid));
-    const item=sid?task?.subtasks?.find(s=>String(s.id)===String(sid)):task;
-    if(!item)return;
-    if(item.status==="inprogress"){setEvNombre("");setShowEv({tid,sid});}
-    else await updTask(tid,sid,i=>({...i,status:"inprogress",startedAt:ts(),pausedAt:null,autopaused:false}));
+  // ── PAUSA MANUAL (sin evento) ──
+  const doManualPause=async()=>{
+    if(!showPause)return;
+    const{tid,sid}=showPause;
+    await updTask(tid,sid,i=>({...i,status:"paused",activeMs:i.activeMs+(ts()-i.startedAt),pausedAt:ts(),autopaused:false,eventoNombre:null}));
+    setShowPause(null);
   };
 
+  // ── Reanudar ──
+  const reanudar=async(tid,sid=null)=>{
+    await updTask(tid,sid,i=>({...i,status:"inprogress",startedAt:ts(),pausedAt:null,autopaused:false}));
+  };
+
+  // ── Pausar por evento no relacionado ──
   const confirmarEv=async()=>{
     if(!evNombre.trim())return;
     const{tid,sid}=showEv;
@@ -348,22 +457,28 @@ function App(){
       const total=item.status==="paused"?item.activeMs:item.activeMs+(ts()-item.startedAt);
       return{...item,status:"done",completedAt:ts(),activeMs:total,hours:msToH(total),observacion:obsT.trim()||null};
     });
-    // Arrancar siguiente en cola
     if(!sid&&task)await startNextQueued(task.assignedTo);
     setShowObs(null);setObsT("");
   };
 
   const eliminarTarea=async()=>{await fbDel("tasks",showDel);setShowDel(null);};
 
-  const addTask=async()=>{
-    if(!nt.title||!nt.assignedTo||!nt.clientId||!nt.tipoDevolucion||!nt.periodo)return;
-    const activo=hasActiveTask(nt.assignedTo);
-    const status=activo?"queued":"inprogress";
-    const startedAt=activo?null:ts();
-    const task=mkTask({title:nt.title,assignedTo:nt.assignedTo,assignedBy:cur.id,clientId:nt.clientId,tipoDevolucion:nt.tipoDevolucion,periodo:nt.periodo,urgente:nt.urgente,status,startedAt,activeMs:0});
+  const addTask=async(data)=>{
+    const d=data||nt;
+    if(!d.title||!d.assignedTo)return;
+    const activo=hasActiveTask(d.assignedTo);
+    const status=(!activo||d.urgente)?"inprogress":"queued";
+    const startedAt=status==="inprogress"?ts():null;
+    // Si urgente y tiene tarea activa → pausar la actual
+    if(d.urgente&&activo){
+      const current=tasks.find(t=>String(t.assignedTo)===String(d.assignedTo)&&t.status==="inprogress");
+      if(current)await fbSet("tasks",current.id,{...current,status:"paused",activeMs:current.activeMs+(ts()-current.startedAt),pausedAt:ts(),autopaused:false});
+    }
+    const task=mkTask({title:d.title,assignedTo:d.assignedTo,assignedBy:cur.id,clientId:d.clientId||"",tipoDevolucion:d.tipoDevolucion||"",periodo:d.periodo||"",urgente:!!d.urgente,status,startedAt,activeMs:0});
     await fbSet("tasks",task.id,task);
-    pushN(nt.assignedTo,activo?`Nueva tarea en cola${nt.urgente?" ⚡ URGENTE":""}`:`${cur.firstName} te asignó una nueva tarea`,"nueva",nt.title);
-    setNt({title:"",assignedTo:"",clientId:"",tipoDevolucion:"",periodo:"",urgente:false});setShowNT(false);
+    pushN(d.assignedTo,activo&&!d.urgente?`Nueva tarea en cola${d.urgente?" ⚡ URGENTE":""}`:`${cur.firstName} te asignó una nueva tarea`,"nueva",d.title);
+    setNt({title:"",assignedTo:"",clientId:"",tipoDevolucion:"",periodo:"",urgente:false});
+    setShowNT(false);setShowAI(false);
   };
 
   const addSub=async(pid)=>{
@@ -394,11 +509,20 @@ function App(){
   const selAv=async(a)=>{const u={...cur,avatar:a};setUsers(users.map(x=>x.id===cur.id?u:x));setCur(u);await fbSet("users",cur.id,u);setShowAv(false);};
   const savePass=async()=>{
     if(pf.current!==cur.password){setPErr("Contraseña actual incorrecta.");return;}
-    if(pf.nuevo.length<6){setPErr("Mínimo 6 caracteres.");return;}
+    if(pf.nuevo.length<4){setPErr("Mínimo 4 caracteres.");return;}
     if(pf.nuevo!==pf.confirm){setPErr("Las contraseñas no coinciden.");return;}
     const u={...cur,password:pf.nuevo};setUsers(users.map(x=>x.id===cur.id?u:x));setCur(u);await fbSet("users",cur.id,u);
     setPErr("");setPOk(true);setTimeout(()=>{setShowCP(false);setPOk(false);setPf({current:"",nuevo:"",confirm:""});},1500);
   };
+
+  // guardar edición de colaborador
+  const saveColab=async(updated)=>{
+    await fbSet("users",updated.id,updated);
+    setUsers(users.map(u=>u.id===updated.id?updated:u));
+    if(cur.id===updated.id)setCur(updated);
+    setEditColab(null);
+  };
+
   const doLogin=()=>{const u=users.find(u=>u.email.toLowerCase()===lEmail.toLowerCase());if(u&&u.password===lPass){setCur(u);setLErr("");}else setLErr("Correo o contraseña incorrectos.");};
 
   if(!fbReady||loading)return(
@@ -406,7 +530,7 @@ function App(){
       <div style={{textAlign:"center",color:P.gold}}>
         <div style={{fontSize:50,marginBottom:16}}>⏱️</div>
         <div style={{fontSize:18,fontWeight:700,letterSpacing:2}}>TIMETRACK PRO</div>
-        <div style={{fontSize:13,color:P.goldL,marginTop:8}}>Conectando con la base de datos...</div>
+        <div style={{fontSize:13,color:P.goldL,marginTop:8}}>Conectando...</div>
         <div style={{marginTop:20,width:40,height:40,border:`3px solid ${P.gold}`,borderTop:"3px solid transparent",borderRadius:"50%",animation:"spin 1s linear infinite",margin:"20px auto"}}></div>
       </div>
     </div>
@@ -435,18 +559,11 @@ function App(){
 
   const nav=[{id:"board",icon:"📋",label:"Tablero"},{id:"clients",icon:"🏢",label:"Clientes"},{id:"colabs",icon:"👥",label:"Colaboradores"},{id:"report",icon:"📊",label:"Reportes"},...(isJ?[{id:"team",icon:"🏠",label:"Equipo"}]:[])];
 
-  // Ordenar tareas: urgentes primero, luego por id
-  const sortedTasks=()=>{
-    const t=myTasks();
-    return [...t].sort((a,b)=>{
-      if(a.urgente&&!b.urgente)return -1;
-      if(!a.urgente&&b.urgente)return 1;
-      return 0;
-    });
-  };
+  const sortedTasks=()=>[...myTasks()].sort((a,b)=>(b.urgente?1:0)-(a.urgente?1:0));
 
   return(
     <div style={{minHeight:"100vh",background:P.lightG}}>
+      {/* NAVBAR */}
       <div style={{background:P.black,borderBottom:`2px solid ${P.gold}`,padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <div style={{width:34,height:34,background:`linear-gradient(135deg,${P.goldD},${P.gold})`,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>⏱️</div>
@@ -461,18 +578,19 @@ function App(){
             {unread>0&&<div style={{position:"absolute",top:-3,right:-3,background:P.danger,color:P.white,borderRadius:"50%",width:17,height:17,fontSize:9,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{unread}</div>}
           </div>
           <div onClick={()=>setShowAv(true)} style={{width:36,height:36,borderRadius:"50%",background:rbg(role),border:`2px solid ${P.gold}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,cursor:"pointer"}}>{cur.avatar}</div>
-          <div><div style={{fontSize:13,fontWeight:700,color:P.gold}}>{cur.firstName} {cur.lastName}</div><span style={{...rBadge(role),fontSize:10}}>{rl(role)}</span></div>
+          <div><div style={{fontSize:13,fontWeight:700,color:P.gold}}>{cur.firstName}</div><span style={{...rBadge(role),fontSize:10}}>{rl(role)}</span></div>
           <button onClick={()=>setShowCP(true)} style={{padding:"5px 10px",borderRadius:6,border:`1px solid ${P.gold}`,background:"transparent",color:P.gold,cursor:"pointer",fontSize:12}}>🔑</button>
           <button onClick={()=>setCur(null)} style={{padding:"5px 10px",borderRadius:6,border:`1px solid ${P.goldD}`,background:"transparent",color:P.goldL,cursor:"pointer",fontSize:12}}>Salir</button>
         </div>
       </div>
 
+      {/* NOTIFICACIONES */}
       {showNP&&<div style={{position:"fixed",top:62,right:14,width:320,background:P.white,borderRadius:14,boxShadow:"0 8px 32px #00000033",border:`1px solid ${P.border}`,zIndex:200,maxHeight:440,display:"flex",flexDirection:"column"}}>
         <div style={{padding:"12px 14px",borderBottom:`1px solid ${P.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",background:P.black,borderRadius:"14px 14px 0 0"}}>
           <span style={{fontWeight:800,color:P.gold,fontSize:14}}>🔔 Notificaciones</span>
           <div style={{display:"flex",gap:8}}>
             {unread>0&&<button onClick={()=>setNotifs(notifs.map(n=>n.userId===cur.id?{...n,read:true}:n))} style={{fontSize:11,color:P.goldL,background:"transparent",border:"none",cursor:"pointer",fontWeight:600}}>Marcar leídas</button>}
-            <button onClick={()=>setShowNP(false)} style={{fontSize:16,background:"transparent",border:"none",cursor:"pointer",color:P.goldL}}>×</button>
+            <button onClick={()=>setShowNP(false)} style={{fontSize:18,background:"transparent",border:"none",cursor:"pointer",color:P.goldL}}>×</button>
           </div>
         </div>
         <div style={{overflowY:"auto",flex:1}}>
@@ -487,10 +605,14 @@ function App(){
 
       <div style={{padding:20,maxWidth:1100,margin:"0 auto"}}>
 
+        {/* ── TABLERO ── */}
         {view==="board"&&<>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,flexWrap:"wrap",gap:8}}>
             <h2 style={{margin:0,color:P.black,fontSize:19,fontWeight:800}}>📋 Tablero de Tareas</h2>
-            {canAssign&&<button onClick={()=>setShowNT(true)} style={{padding:"9px 20px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>+ Nueva Tarea</button>}
+            {canAssign&&<div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setShowAI(true)} style={{padding:"9px 16px",background:`linear-gradient(135deg,#0284C7,${P.ai})`,color:P.white,border:"none",borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:6}}>🤖 IA</button>
+              <button onClick={()=>setShowNT(true)} style={{padding:"9px 20px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>+ Nueva Tarea</button>
+            </div>}
           </div>
           {sortedTasks().length===0&&<div style={{textAlign:"center",padding:60,color:P.gray}}>No hay tareas aún.</div>}
           {sortedTasks().map(task=>{
@@ -503,7 +625,7 @@ function App(){
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
                 <div style={{flex:1,minWidth:180}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,gap:8}}>
-                    <div style={{fontWeight:700,color:P.black,fontSize:14,display:"flex",alignItems:"center",gap:6}}>
+                    <div style={{fontWeight:700,color:P.black,fontSize:14,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                       {task.urgente&&<span style={{background:P.urgent,color:P.white,fontSize:10,padding:"1px 6px",borderRadius:99,fontWeight:800}}>⚡ URGENTE</span>}
                       {isQ&&<span style={{background:"#EDE9FE",color:P.urgent,fontSize:10,padding:"1px 6px",borderRadius:99,fontWeight:800}}>⏳ EN COLA</span>}
                       {task.title}
@@ -520,6 +642,7 @@ function App(){
                     {asg&&<span style={rBadge(asg.role)}>{asg.avatar} {asg.firstName}</span>}
                     {asr&&<span style={{fontSize:11,color:P.gray}}>por {asr.firstName}</span>}
                     {task.eventoNombre&&isP&&<span style={{fontSize:11,background:"#FFF0CC",color:P.goldD,padding:"2px 8px",borderRadius:99,border:`1px solid ${P.border}`}}>📌 {task.eventoNombre}</span>}
+                    {isP&&!task.eventoNombre&&<span style={{fontSize:11,background:"#FFF7ED",color:P.goldD,padding:"2px 8px",borderRadius:99}}>⏸ Pausa manual</span>}
                   </div>
                   {task.observacion&&isD&&<div style={{marginTop:6,fontSize:12,color:P.gray,background:P.lightG,borderRadius:6,padding:"5px 8px",border:`1px solid ${P.border}`}}>💬 {task.observacion}</div>}
                 </div>
@@ -534,12 +657,15 @@ function App(){
                     <div style={{fontSize:11,color:P.gray,marginTop:2}}>Iniciará al completar<br/>la tarea actual</div>
                   </div>}
                   <div style={{display:"flex",gap:5,flexWrap:"wrap",justifyContent:"flex-end"}}>
-                    {/* Marcar urgente — todos pueden */}
                     {!isD&&<button onClick={()=>toggleUrgente(task.id)} title={task.urgente?"Quitar urgente":"Marcar urgente"} style={{padding:"5px 9px",background:task.urgente?P.urgent:"transparent",color:task.urgente?P.white:P.urgent,border:`1px solid ${P.urgent}`,borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:700}}>⚡</button>}
                     {!isD&&!isQ&&<button onClick={()=>sendRem(task)} style={{padding:"5px 9px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:7,cursor:"pointer",fontSize:12}}>🔔</button>}
-                    {!isD&&!isQ&&<button onClick={()=>togglePause(task.id)} style={{padding:"6px 10px",background:isP?P.success:P.danger,color:P.white,border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:11}}>{isP?"▶ Reanudar":"⏸ EVENTO NO RELACIONADO"}</button>}
+                    {/* Pausa manual — solo el responsable */}
+                    {!isD&&!isQ&&isAssignee&&isR&&<button onClick={()=>setShowPause({tid:task.id,sid:null})} style={{padding:"6px 10px",background:"#FFF7ED",color:P.goldD,border:`1.5px solid ${P.goldD}`,borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:11}}>⏸ Pausar</button>}
+                    {/* Evento no relacionado */}
+                    {!isD&&!isQ&&isR&&<button onClick={()=>{setEvNombre("");setShowEv({tid:task.id,sid:null});}} style={{padding:"6px 10px",background:P.danger,color:P.white,border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:11}}>📌 Evento</button>}
+                    {!isD&&!isQ&&isP&&<button onClick={()=>reanudar(task.id)} style={{padding:"6px 10px",background:P.success,color:P.white,border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:11}}>▶ Reanudar</button>}
                     {!isD&&!isQ&&isAssignee&&<button onClick={()=>iniciarComplete(task.id,null)} style={{padding:"6px 12px",background:P.gold,color:P.black,border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:12}}>✅ Completar</button>}
-                    {!isD&&!isQ&&canSub&&<button onClick={()=>setShowST(task.id)} style={{padding:"6px 12px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:7,fontWeight:600,cursor:"pointer",fontSize:12}}>+ Sub-tarea</button>}
+                    {!isD&&!isQ&&canSub&&<button onClick={()=>setShowST(task.id)} style={{padding:"6px 12px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:7,fontWeight:600,cursor:"pointer",fontSize:12}}>+ Sub</button>}
                   </div>
                 </div>
               </div>
@@ -552,7 +678,9 @@ function App(){
                     <div><span style={{fontSize:13,color:P.black,fontWeight:600}}>{st.title}</span>{stu&&<span style={{...rBadge(stu.role),marginLeft:8,fontSize:10}}>{stu.avatar} {stu.firstName}</span>}</div>
                     <div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"wrap"}}>
                       <div style={{background:P.white,border:`1px solid ${P.border}`,borderRadius:6,padding:"3px 8px",fontSize:11,fontWeight:700,color:P.black,fontVariantNumeric:"tabular-nums"}}>{sr?"🔴 ":sp?"⏸ ":""}{fmtT(sa)}</div>
-                      {!sd&&<button onClick={()=>togglePause(task.id,st.id)} style={{padding:"3px 8px",background:sp?P.success:P.danger,color:P.white,border:"none",borderRadius:6,fontWeight:700,cursor:"pointer",fontSize:11}}>{sp?"▶":"⏸"}</button>}
+                      {!sd&&stA&&sr&&<button onClick={()=>setShowPause({tid:task.id,sid:st.id})} style={{padding:"3px 8px",background:"#FFF7ED",color:P.goldD,border:`1px solid ${P.goldD}`,borderRadius:6,fontWeight:700,cursor:"pointer",fontSize:11}}>⏸</button>}
+                      {!sd&&sr&&<button onClick={()=>{setEvNombre("");setShowEv({tid:task.id,sid:st.id});}} style={{padding:"3px 8px",background:P.danger,color:P.white,border:"none",borderRadius:6,fontWeight:700,cursor:"pointer",fontSize:11}}>📌</button>}
+                      {!sd&&sp&&<button onClick={()=>reanudar(task.id,st.id)} style={{padding:"3px 8px",background:P.success,color:P.white,border:"none",borderRadius:6,fontWeight:700,cursor:"pointer",fontSize:11}}>▶</button>}
                       {!sd&&stA&&<button onClick={()=>iniciarComplete(task.id,st.id)} style={{padding:"4px 10px",background:P.gold,color:P.black,border:"none",borderRadius:6,fontWeight:700,cursor:"pointer",fontSize:11}}>✅</button>}
                     </div>
                   </div>;
@@ -562,12 +690,13 @@ function App(){
           })}
         </>}
 
+        {/* ── CLIENTES ── */}
         {view==="clients"&&<>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:8}}>
             <h2 style={{margin:0,color:P.black,fontSize:19,fontWeight:800}}>🏢 Clientes</h2>
             {canClients&&<button onClick={openNC} style={{padding:"8px 18px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>+ Nuevo Cliente</button>}
           </div>
-          {!canClients&&<div style={{background:"#FFF8E7",border:`1px solid ${P.border}`,borderRadius:10,padding:12,color:P.goldD,fontSize:13,marginBottom:14}}>Solo Jefe y Coordinador pueden crear clientes.</div>}
+          {!canClients&&<div style={{background:"#FFF8E7",border:`1px solid ${P.border}`,borderRadius:10,padding:12,color:P.goldD,fontSize:13,marginBottom:14}}>Solo Jefe y Coordinador pueden gestionar clientes.</div>}
           {clients.length===0&&<div style={{textAlign:"center",padding:40,color:P.gray}}>No hay clientes aún.</div>}
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}}>
             {clients.map(cl=><div key={cl.id} style={{background:P.white,borderRadius:12,border:`1.5px solid ${P.border}`,padding:18}}>
@@ -587,13 +716,14 @@ function App(){
               </div>
               <div style={{fontSize:11,fontWeight:700,color:P.goldD,marginBottom:5,letterSpacing:1}}>PERIODOS</div>
               <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-                {(cl.periodos||[]).length===0&&<span style={{fontSize:12,color:P.gray}}>Sin periodos</span>}
+                {!(cl.periodos||[]).length&&<span style={{fontSize:12,color:P.gray}}>Sin periodos</span>}
                 {(cl.periodos||[]).map((p,i)=><span key={i} style={{fontSize:11,background:P.lightG,color:P.goldD,padding:"2px 9px",borderRadius:99,fontWeight:600,border:`1px solid ${P.border}`}}>📅 {p}</span>)}
               </div>
             </div>)}
           </div>
         </>}
 
+        {/* ── COLABORADORES ── */}
         {view==="colabs"&&<>
           <h2 style={{margin:"0 0 18px",color:P.black,fontSize:19,fontWeight:800}}>👥 Colaboradores</h2>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:12}}>
@@ -602,9 +732,12 @@ function App(){
               const pa=tasks.filter(t=>String(t.assignedTo)===String(c.id)&&t.status==="paused").length;
               const pq=tasks.filter(t=>String(t.assignedTo)===String(c.id)&&t.status==="queued").length;
               return <div key={c.id} style={{background:P.white,borderRadius:12,border:`1.5px solid ${P.border}`,padding:16}}>
-                <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:10}}>
-                  <div style={{width:40,height:40,borderRadius:"50%",background:rbg(c.role),border:`2px solid ${P.gold}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{c.avatar}</div>
-                  <div><div style={{fontWeight:700,color:P.black,fontSize:13}}>{c.name}</div><span style={{...rBadge(c.role),fontSize:10}}>{rl(c.role)}</span></div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <div style={{width:40,height:40,borderRadius:"50%",background:rbg(c.role),border:`2px solid ${P.gold}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{c.avatar}</div>
+                    <div><div style={{fontWeight:700,color:P.black,fontSize:13}}>{c.name}</div><span style={{...rBadge(c.role),fontSize:10}}>{rl(c.role)}</span></div>
+                  </div>
+                  {isJ&&<button onClick={()=>setEditColab(c)} style={{padding:"4px 9px",background:P.lightG,border:`1px solid ${P.border}`,borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:600,color:P.dark}}>✏️</button>}
                 </div>
                 <div style={{fontSize:12,color:P.gray,marginBottom:8}}>✉️ <a href={`mailto:${c.email}`} style={{color:P.goldD,textDecoration:"none"}}>{c.email}</a></div>
                 <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
@@ -619,6 +752,7 @@ function App(){
 
         {view==="report"&&<ReporteView tasks={tasks} clients={clients} users={users}/>}
 
+        {/* ── EQUIPO ── */}
         {view==="team"&&isJ&&<>
           <h2 style={{margin:"0 0 18px",color:P.black,fontSize:19,fontWeight:800}}>🏠 Vista del Equipo</h2>
           {ROLE_ORDER.filter(r=>r!=="jefe").map(r=>{
@@ -647,20 +781,27 @@ function App(){
         </>}
       </div>
 
-      {/* MODALES */}
+      {/* ── MODALES ── */}
       {showDel&&(()=>{const t=tasks.find(t=>String(t.id)===String(showDel));return <Modal title="🗑️ Eliminar Tarea" onClose={()=>setShowDel(null)}>
-        <p style={{fontSize:14,color:P.dark,margin:"0 0 10px"}}>¿Eliminar esta tarea?</p>
+        <p style={{fontSize:14,color:P.dark,margin:"0 0 10px"}}>¿Eliminar esta tarea permanentemente?</p>
         <div style={{background:P.lightG,border:`1px solid ${P.border}`,borderRadius:8,padding:"10px 14px",marginBottom:12}}><span style={{fontWeight:700,color:P.black,fontSize:13}}>{t?.title}</span></div>
         <p style={{fontSize:12,color:P.danger,margin:"0 0 16px"}}>⚠️ Esta acción no se puede deshacer.</p>
         <BtnRow onCancel={()=>setShowDel(null)} onConfirm={eliminarTarea} label="Sí, eliminar" color={P.danger}/>
       </Modal>;})()}
 
-      {showEv&&<Modal title="⏸ Evento No Relacionado a Proyecto" onClose={()=>setShowEv(null)}>
-        <p style={{fontSize:13,color:P.gray,margin:"0 0 14px"}}>Indica el nombre del evento:</p>
+      {/* Confirmar pausa manual */}
+      {showPause&&<Modal title="⏸ Pausar tarea" onClose={()=>setShowPause(null)}>
+        <p style={{fontSize:14,color:P.dark,margin:"0 0 16px"}}>El cronómetro se detendrá. Podrás reanudar cuando estés listo.</p>
+        <div style={{background:"#FFF7ED",border:`1px solid ${P.goldD}`,borderRadius:8,padding:"10px 14px",marginBottom:16,fontSize:13,color:P.goldD}}>⏸ El tiempo activo hasta ahora quedará guardado.</div>
+        <BtnRow onCancel={()=>setShowPause(null)} onConfirm={doManualPause} label="⏸ Confirmar pausa" color={P.goldD}/>
+      </Modal>}
+
+      {showEv&&<Modal title="📌 Evento No Relacionado" onClose={()=>setShowEv(null)}>
+        <p style={{fontSize:13,color:P.gray,margin:"0 0 14px"}}>Registra el nombre del evento externo por el que debes pausar:</p>
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Nombre del evento *</label>
-        <input value={evNombre} onChange={e=>setEvNombre(e.target.value)} onKeyDown={e=>e.key==="Enter"&&confirmarEv()} placeholder="Ej: Reunión administrativa..." style={iSt} autoFocus/>
+        <input value={evNombre} onChange={e=>setEvNombre(e.target.value)} onKeyDown={e=>e.key==="Enter"&&confirmarEv()} placeholder="Ej: Reunión administrativa, Visita fiscal..." style={iSt} autoFocus/>
         {!evNombre.trim()&&<p style={{fontSize:11,color:P.danger,margin:"-8px 0 10px"}}>* Campo obligatorio</p>}
-        <BtnRow onCancel={()=>setShowEv(null)} onConfirm={confirmarEv} label="⏸ Pausar y registrar" color={P.danger}/>
+        <BtnRow onCancel={()=>setShowEv(null)} onConfirm={confirmarEv} label="📌 Registrar y pausar" color={P.danger} disabled={!evNombre.trim()}/>
       </Modal>}
 
       {showObs&&(()=>{
@@ -670,7 +811,7 @@ function App(){
         return <Modal title="✅ Completar Tarea" onClose={()=>setShowObs(null)}>
           <p style={{fontSize:13,color:P.gray,margin:"0 0 14px"}}>¿Alguna observación? <span style={{fontSize:12}}>(opcional)</span></p>
           <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Observación</label>
-          <textarea value={obsT} onChange={e=>setObsT(e.target.value)} placeholder="Ej: Se encontraron diferencias..." style={{...iSt,height:90,resize:"vertical"}}/>
+          <textarea value={obsT} onChange={e=>setObsT(e.target.value)} placeholder="Ej: Se encontraron diferencias en..." style={{...iSt,height:90,resize:"vertical"}}/>
           <div style={{background:P.lightG,border:`1.5px solid ${P.gold}`,borderRadius:10,padding:12,marginBottom:14,textAlign:"center"}}>
             <div style={{fontSize:11,fontWeight:700,color:P.goldD,marginBottom:2}}>TIEMPO ACTIVO</div>
             <div style={{fontSize:22,fontWeight:800,color:P.black,fontVariantNumeric:"tabular-nums"}}>{fmtT(ms)}</div>
@@ -686,30 +827,29 @@ function App(){
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Confirmar</label><input value={pf.confirm} onChange={e=>setPf({...pf,confirm:e.target.value})} type="password" style={iSt}/>
         {pErr&&<div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:8,padding:"8px 12px",color:P.danger,fontSize:13,marginBottom:10}}>⚠️ {pErr}</div>}
         {pOk&&<div style={{background:"#F0FDF4",border:"1px solid #BBF7D0",borderRadius:8,padding:"8px 12px",color:P.success,fontSize:13,marginBottom:10}}>✅ ¡Actualizada!</div>}
-        <BtnRow onCancel={()=>{setShowCP(false);setPErr("");setPf({current:"",nuevo:"",confirm:""});}} onConfirm={savePass} label="Guardar" color={P.black}/>
+        <BtnRow onCancel={()=>{setShowCP(false);setPErr("");setPf({current:"",nuevo:"",confirm:""}); }} onConfirm={savePass} label="Guardar" color={P.black}/>
       </Modal>}
 
       {showCF&&<Modal title={editCl?"✏️ Editar Cliente":"🏢 Nuevo Cliente"} onClose={()=>setShowCF(false)}>
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Compañía</label>
         <input value={clf.compania} onChange={e=>setClf({...clf,compania:e.target.value})} style={iSt}/>
-        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Tipos de Devolución <span style={{color:P.goldD,fontSize:11}}>(selecciona todos los que apliquen)</span></label>
-        <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:6,marginBottom:12,maxHeight:200,overflowY:"auto",padding:"8px",border:`1px solid ${P.border}`,borderRadius:7,background:P.lightG}}>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Tipos de Devolución</label>
+        <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:6,marginBottom:12,maxHeight:200,overflowY:"auto",padding:8,border:`1px solid ${P.border}`,borderRadius:7,background:P.lightG}}>
           {TIPOS_DEVOLUCION.map(td=><label key={td} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,color:P.dark,padding:"4px 6px",borderRadius:6,background:clf.tiposDevolucion.includes(td)?P.white:"transparent",border:clf.tiposDevolucion.includes(td)?`1px solid ${P.border}`:"1px solid transparent"}}>
-            <input type="checkbox" checked={clf.tiposDevolucion.includes(td)} onChange={()=>toggleTipoDevolucion(td)} style={{accentColor:P.goldD,width:14,height:14}}/>
-            {td}
+            <input type="checkbox" checked={clf.tiposDevolucion.includes(td)} onChange={()=>toggleTipoDevolucion(td)} style={{accentColor:P.goldD,width:14,height:14}}/>{td}
           </label>)}
         </div>
-        {clf.tiposDevolucion.length===0&&<p style={{fontSize:11,color:P.danger,margin:"-8px 0 10px"}}>* Selecciona al menos un tipo</p>}
+        {clf.tiposDevolucion.length===0&&<p style={{fontSize:11,color:P.danger,margin:"-8px 0 10px"}}>* Selecciona al menos uno</p>}
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Periodos</label>
         {clf.periodos.map((p,i)=><div key={i} style={{display:"flex",gap:6,marginTop:4,marginBottom:6}}>
           <input value={p} onChange={e=>{const ps=[...clf.periodos];ps[i]=e.target.value;setClf({...clf,periodos:ps});}} placeholder="Ej: Enero 2025" style={{...iSt,marginTop:0,marginBottom:0,flex:1}}/>
           {clf.periodos.length>1&&<button onClick={()=>setClf({...clf,periodos:clf.periodos.filter((_,idx)=>idx!==i)})} style={{padding:"0 10px",background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:7,cursor:"pointer",color:P.danger,fontWeight:700,fontSize:16}}>×</button>}
         </div>)}
-        <button onClick={()=>setClf({...clf,periodos:[...clf.periodos,""]})} style={{width:"100%",padding:"7px",border:`1.5px dashed ${P.border}`,borderRadius:7,background:"transparent",color:P.gray,cursor:"pointer",fontSize:13,marginBottom:14,fontWeight:600}}>+ Agregar periodo</button>
-        <BtnRow onCancel={()=>setShowCF(false)} onConfirm={saveCl} label={editCl?"Guardar":"Crear"} color={P.black}/>
+        <button onClick={()=>setClf({...clf,periodos:[...clf.periodos,""]})} style={{width:"100%",padding:7,border:`1.5px dashed ${P.border}`,borderRadius:7,background:"transparent",color:P.gray,cursor:"pointer",fontSize:13,marginBottom:14,fontWeight:600}}>+ Agregar periodo</button>
+        <BtnRow onCancel={()=>setShowCF(false)} onConfirm={saveCl} label={editCl?"Guardar cambios":"Crear"} color={P.black}/>
       </Modal>}
 
-      {showNT&&<Modal title="Nueva Tarea" onClose={()=>setShowNT(false)}>
+      {showNT&&<Modal title="📋 Nueva Tarea" onClose={()=>setShowNT(false)}>
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Actividad</label>
         <select value={nt.title} onChange={e=>setNt({...nt,title:e.target.value})} style={iSt}>
           <option value="">Selecciona actividad...</option>
@@ -739,15 +879,14 @@ function App(){
         </>}
         <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",marginBottom:12,fontSize:13,fontWeight:600,color:P.urgent}}>
           <input type="checkbox" checked={nt.urgente} onChange={e=>setNt({...nt,urgente:e.target.checked})} style={{accentColor:P.urgent,width:15,height:15}}/>
-          ⚡ Marcar como URGENTE *(se saltará la cola)*
+          ⚡ Marcar como URGENTE (se saltará la cola)
         </label>
         {hasActiveTask(nt.assignedTo)&&nt.assignedTo&&!nt.urgente&&<div style={{background:"#EDE9FE",border:`1px solid ${P.urgent}`,borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:12,color:P.urgent}}>⏳ Esta persona tiene una tarea activa. La nueva quedará <strong>en cola</strong>.</div>}
-        {hasActiveTask(nt.assignedTo)&&nt.assignedTo&&nt.urgente&&<div style={{background:"#FEF2F2",border:`1px solid ${P.danger}`,borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:12,color:P.danger}}>⚡ La tarea actual se <strong>pausará</strong> y esta iniciará inmediatamente.</div>}
-        <div style={{background:P.lightG,borderRadius:8,padding:9,marginBottom:14,fontSize:12,color:P.goldD,border:`1px solid ${P.border}`}}>⏱️ El cronómetro iniciará automáticamente.</div>
-        <BtnRow onCancel={()=>setShowNT(false)} onConfirm={addTask} label="Crear tarea" color={P.black}/>
+        {hasActiveTask(nt.assignedTo)&&nt.assignedTo&&nt.urgente&&<div style={{background:"#FEF2F2",border:`1px solid ${P.danger}`,borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:12,color:P.danger}}>⚡ La tarea actual se <strong>pausará</strong> y esta iniciará de inmediato.</div>}
+        <BtnRow onCancel={()=>setShowNT(false)} onConfirm={()=>addTask(null)} label="Crear tarea" color={P.black} disabled={!nt.title||!nt.assignedTo}/>
       </Modal>}
 
-      {showST&&<Modal title="Agregar Sub-tarea" onClose={()=>setShowST(null)}>
+      {showST&&<Modal title="➕ Sub-tarea" onClose={()=>setShowST(null)}>
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Actividad</label>
         <select value={nst.title} onChange={e=>setNst({...nst,title:e.target.value})} style={iSt}>
           <option value="">Selecciona actividad...</option>
@@ -758,16 +897,20 @@ function App(){
           <option value="">Selecciona persona...</option>
           {subTo.map(u=><option key={u.id} value={u.id}>{u.avatar} {u.firstName} {u.lastName} — {rl(u.role)}</option>)}
         </select>
-        <BtnRow onCancel={()=>setShowST(null)} onConfirm={()=>addSub(showST)} label="Asignar ⏱️" color={P.black}/>
+        <BtnRow onCancel={()=>setShowST(null)} onConfirm={()=>addSub(showST)} label="Asignar ⏱️" color={P.black} disabled={!nst.title||!nst.assignedTo}/>
       </Modal>}
 
-      {showAv&&<Modal title="Elige tu Avatar" onClose={()=>setShowAv(false)}>
-        <p style={{fontSize:13,color:P.gray,margin:"0 0 12px"}}>Haz clic en el avatar que más te guste 👇</p>
+      {showAv&&<Modal title="🎨 Elige tu Avatar" onClose={()=>setShowAv(false)}>
         <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:7,marginBottom:14}}>
           {AVATARS.map(a=><div key={a} onClick={()=>selAv(a)} style={{fontSize:26,textAlign:"center",padding:7,borderRadius:9,cursor:"pointer",background:cur.avatar===a?P.lightG:P.white,border:`2px solid ${cur.avatar===a?P.gold:P.border}`}}>{a}</div>)}
         </div>
-        <button onClick={()=>setShowAv(false)} style={{width:"100%",padding:10,border:`1px solid ${P.border}`,borderRadius:8,background:"transparent",cursor:"pointer",fontWeight:600,color:P.gray}}>Cancelar</button>
       </Modal>}
+
+      {/* Editar colaborador — solo Jefe */}
+      {editColab&&<EditColabModal user={editColab} onSave={saveColab} onClose={()=>setEditColab(null)}/>}
+
+      {/* Agente IA */}
+      {showAI&&<AgenteIA cur={cur} users={users} clients={clients} tasks={tasks} onCrear={addTask} onClose={()=>setShowAI(false)}/>}
     </div>
   );
 }
