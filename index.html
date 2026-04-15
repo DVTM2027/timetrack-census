@@ -434,6 +434,24 @@ function App(){
     setShowPause(null);
   };
 
+  // ── ACTIVAR URGENTE DESDE COLA ──
+  const[showNoUrgente,setShowNoUrgente]=useState(false);
+  const activarUrgente=async(currentTaskId)=>{
+    const currentTask=tasks.find(t=>String(t.id)===String(currentTaskId));
+    if(!currentTask)return;
+    const uid=currentTask.assignedTo;
+    // buscar urgente en cola del mismo usuario
+    const urgentQueue=tasks.filter(t=>String(t.assignedTo)===String(uid)&&t.status==="queued"&&t.urgente)
+      .sort((a,b)=>a.id>b.id?1:-1);
+    if(urgentQueue.length===0){setShowNoUrgente(true);return;}
+    // pausar tarea actual
+    await fbSet("tasks",currentTaskId,{...currentTask,status:"paused",activeMs:currentTask.activeMs+(ts()-currentTask.startedAt),pausedAt:ts(),autopaused:false});
+    // iniciar la urgente
+    const next={...urgentQueue[0],status:"inprogress",startedAt:ts()};
+    await fbSet("tasks",next.id,next);
+    pushN(uid,`⚡ Tarea urgente iniciada: ${next.title}`,"nueva",next.title);
+  };
+
   // ── Reanudar ──
   const reanudar=async(tid,sid=null)=>{
     await updTask(tid,sid,i=>({...i,status:"inprogress",startedAt:ts(),pausedAt:null,autopaused:false}));
@@ -657,7 +675,8 @@ function App(){
                     <div style={{fontSize:11,color:P.gray,marginTop:2}}>Iniciará al completar<br/>la tarea actual</div>
                   </div>}
                   <div style={{display:"flex",gap:5,flexWrap:"wrap",justifyContent:"flex-end"}}>
-                    {!isD&&<button onClick={()=>toggleUrgente(task.id)} title={task.urgente?"Quitar urgente":"Marcar urgente"} style={{padding:"5px 9px",background:task.urgente?P.urgent:"transparent",color:task.urgente?P.white:P.urgent,border:`1px solid ${P.urgent}`,borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:700}}>⚡</button>}
+                    {!isD&&!isR&&<button onClick={()=>toggleUrgente(task.id)} title={task.urgente?"Quitar urgente":"Marcar urgente"} style={{padding:"5px 9px",background:task.urgente?P.urgent:"transparent",color:task.urgente?P.white:P.urgent,border:`1px solid ${P.urgent}`,borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:700}}>⚡</button>}
+                    {!isD&&isR&&<button onClick={()=>activarUrgente(task.id)} title="Activar siguiente tarea urgente en cola" style={{padding:"5px 9px",background:P.gold,color:P.black,border:`1px solid ${P.goldD}`,borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:800}}>⚡</button>}
                     {!isD&&!isQ&&<button onClick={()=>sendRem(task)} style={{padding:"5px 9px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:7,cursor:"pointer",fontSize:12}}>🔔</button>}
                     {/* Pausa manual — solo el responsable */}
                     {!isD&&!isQ&&isAssignee&&isR&&<button onClick={()=>setShowPause({tid:task.id,sid:null})} style={{padding:"6px 10px",background:"#FFF7ED",color:P.goldD,border:`1.5px solid ${P.goldD}`,borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:11}}>⏸ Pausar</button>}
@@ -788,6 +807,16 @@ function App(){
         <p style={{fontSize:12,color:P.danger,margin:"0 0 16px"}}>⚠️ Esta acción no se puede deshacer.</p>
         <BtnRow onCancel={()=>setShowDel(null)} onConfirm={eliminarTarea} label="Sí, eliminar" color={P.danger}/>
       </Modal>;})()}
+
+      {/* Sin urgentes en cola */}
+      {showNoUrgente&&<Modal title="⚡ Sin tareas urgentes" onClose={()=>setShowNoUrgente(false)}>
+        <div style={{textAlign:"center",padding:"20px 10px"}}>
+          <div style={{fontSize:52,marginBottom:14}}>💪</div>
+          <p style={{fontSize:16,fontWeight:700,color:P.black,margin:"0 0 10px",lineHeight:1.4}}>No tienes tareas urgentes en cola</p>
+          <p style={{fontSize:14,color:P.gray,margin:"0 0 24px",lineHeight:1.5}}>¡Vamos, que seguro falta poco para que termines tu asignación!</p>
+          <button onClick={()=>setShowNoUrgente(false)} style={{padding:"10px 32px",background:P.gold,color:P.black,border:"none",borderRadius:8,fontWeight:700,fontSize:14,cursor:"pointer"}}>¡A seguir! 🚀</button>
+        </div>
+      </Modal>}
 
       {/* Confirmar pausa manual */}
       {showPause&&<Modal title="⏸ Pausar tarea" onClose={()=>setShowPause(null)}>
