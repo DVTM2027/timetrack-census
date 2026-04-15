@@ -678,8 +678,7 @@ function App(){
                     {!isD&&!isR&&<button onClick={()=>toggleUrgente(task.id)} title={task.urgente?"Quitar urgente":"Marcar urgente"} style={{padding:"5px 9px",background:task.urgente?P.urgent:"transparent",color:task.urgente?P.white:P.urgent,border:`1px solid ${P.urgent}`,borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:700}}>⚡</button>}
                     {!isD&&isR&&<button onClick={()=>activarUrgente(task.id)} title="Activar siguiente tarea urgente en cola" style={{padding:"5px 9px",background:P.gold,color:P.black,border:`1px solid ${P.goldD}`,borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:800}}>⚡</button>}
                     {!isD&&!isQ&&<button onClick={()=>sendRem(task)} style={{padding:"5px 9px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:7,cursor:"pointer",fontSize:12}}>🔔</button>}
-                    {/* Pausa manual — solo el responsable */}
-                    {!isD&&!isQ&&isAssignee&&isR&&<button onClick={()=>setShowPause({tid:task.id,sid:null})} style={{padding:"6px 10px",background:"#FFF7ED",color:P.goldD,border:`1.5px solid ${P.goldD}`,borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:11}}>⏸ Pausar</button>}
+
                     {/* Evento no relacionado */}
                     {!isD&&!isQ&&isR&&<button onClick={()=>{setEvNombre("");setShowEv({tid:task.id,sid:null});}} style={{padding:"6px 10px",background:P.danger,color:P.white,border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:11}}>📌 Evento</button>}
                     {!isD&&!isQ&&isP&&<button onClick={()=>reanudar(task.id)} style={{padding:"6px 10px",background:P.success,color:P.white,border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:11}}>▶ Reanudar</button>}
@@ -697,7 +696,7 @@ function App(){
                     <div><span style={{fontSize:13,color:P.black,fontWeight:600}}>{st.title}</span>{stu&&<span style={{...rBadge(stu.role),marginLeft:8,fontSize:10}}>{stu.avatar} {stu.firstName}</span>}</div>
                     <div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"wrap"}}>
                       <div style={{background:P.white,border:`1px solid ${P.border}`,borderRadius:6,padding:"3px 8px",fontSize:11,fontWeight:700,color:P.black,fontVariantNumeric:"tabular-nums"}}>{sr?"🔴 ":sp?"⏸ ":""}{fmtT(sa)}</div>
-                      {!sd&&stA&&sr&&<button onClick={()=>setShowPause({tid:task.id,sid:st.id})} style={{padding:"3px 8px",background:"#FFF7ED",color:P.goldD,border:`1px solid ${P.goldD}`,borderRadius:6,fontWeight:700,cursor:"pointer",fontSize:11}}>⏸</button>}
+
                       {!sd&&sr&&<button onClick={()=>{setEvNombre("");setShowEv({tid:task.id,sid:st.id});}} style={{padding:"3px 8px",background:P.danger,color:P.white,border:"none",borderRadius:6,fontWeight:700,cursor:"pointer",fontSize:11}}>📌</button>}
                       {!sd&&sp&&<button onClick={()=>reanudar(task.id,st.id)} style={{padding:"3px 8px",background:P.success,color:P.white,border:"none",borderRadius:6,fontWeight:700,cursor:"pointer",fontSize:11}}>▶</button>}
                       {!sd&&stA&&<button onClick={()=>iniciarComplete(task.id,st.id)} style={{padding:"4px 10px",background:P.gold,color:P.black,border:"none",borderRadius:6,fontWeight:700,cursor:"pointer",fontSize:11}}>✅</button>}
