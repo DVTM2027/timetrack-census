@@ -348,7 +348,10 @@ function App(){
   const[showObs,setShowObs]=useState(null);
   const[obsT,setObsT]=useState("");
   const[showDel,setShowDel]=useState(null);
-  const[editColab,setEditColab]=useState(null); // nuevo: editar colaborador
+  const[editColab,setEditColab]=useState(null);
+  const[customActivities,setCustomActivities]=useState([]);
+  const[showActMgr,setShowActMgr]=useState(false);
+  const[newAct,setNewAct]=useState(""); // nuevo: editar colaborador
   const[showPause,setShowPause]=useState(null); // nuevo: confirm pausa manual
   const[nt,setNt]=useState({title:"",assignedTo:"",clientId:"",tipoDevolucion:"",periodo:"",urgente:false});
   const[nst,setNst]=useState({title:"",assignedTo:""});
@@ -371,7 +374,10 @@ function App(){
         setUsers(data);
       }
     });
-    return()=>{unsubT();unsubC();unsubU();};
+    const unsubCfg=window._snap(window._col(db,"config"),snap=>{
+      snap.docs.forEach(d=>{if(d.id==="activities")setCustomActivities(d.data().list||[]);});
+    });
+    return()=>{unsubT();unsubC();unsubU();unsubCfg();};
   },[fbReady]);
 
   useEffect(()=>{
@@ -390,6 +396,7 @@ function App(){
   const role=cur?.role,isJ=role==="jefe",isC=role==="coordinadora",isSr=role==="senior",isSs=role==="semsenior";
   const canAssign=isJ||isC||isSr||isSs;
   const canClients=isJ||isC;
+  const canAddPeriodos=isSr||isSs; // solo añadir periodos
   const assignTo=!cur?[]:isJ?users.filter(u=>u.id!==cur.id):users.filter(u=>CAN_ASSIGN_TO[role]?.includes(u.role));
   const subTo=!cur?[]:users.filter(u=>CAN_ASSIGN_TO[role]?.includes(u.role));
   const myN=cur?notifs.filter(n=>n.userId===cur.id):[];
@@ -624,16 +631,14 @@ function App(){
       <div style={{padding:20,maxWidth:1100,margin:"0 auto"}}>
 
         {/* ── TABLERO ── */}
-        {view==="board"&&<>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,flexWrap:"wrap",gap:8}}>
-            <h2 style={{margin:0,color:P.black,fontSize:19,fontWeight:800}}>📋 Tablero de Tareas</h2>
-            {canAssign&&<div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setShowAI(true)} style={{padding:"9px 16px",background:`linear-gradient(135deg,#0284C7,${P.ai})`,color:P.white,border:"none",borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:6}}>🤖 IA</button>
-              <button onClick={()=>setShowNT(true)} style={{padding:"9px 20px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>+ Nueva Tarea</button>
-            </div>}
-          </div>
-          {sortedTasks().length===0&&<div style={{textAlign:"center",padding:60,color:P.gray}}>No hay tareas aún.</div>}
-          {sortedTasks().map(task=>{
+        {view==="board"&&(()=>{
+          const all=sortedTasks();
+          // Para roles que asignan Y reciben tareas (senior, semsenior): dividir
+          const splitView=isC||isSr||isSs;
+          const tareasPorHacer=splitView?all.filter(t=>String(t.assignedTo)===String(cur.id)):all;
+          const tareasAsignadas=splitView?all.filter(t=>String(t.assignedTo)!==String(cur.id)&&String(t.assignedBy)===String(cur.id)):[];
+
+          const renderTask=(task)=>{
             const asg=gU(task.assignedTo),asr=gU(task.assignedBy),cl=gC(task.clientId);
             const act=liveMs(task),isR=task.status==="inprogress",isP=task.status==="paused",isD=task.status==="done",isQ=task.status==="queued";
             const isAssignee=String(task.assignedTo)===String(cur.id);
@@ -705,8 +710,48 @@ function App(){
                 })}
               </div>}
             </div>;
-          })}
-        </>}
+          };
+
+          return <>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,flexWrap:"wrap",gap:8}}>
+              <h2 style={{margin:0,color:P.black,fontSize:19,fontWeight:800}}>📋 Tablero de Tareas</h2>
+              {canAssign&&<div style={{display:"flex",gap:8}}>
+                <button onClick={()=>setShowAI(true)} style={{padding:"9px 16px",background:`linear-gradient(135deg,#0284C7,${P.ai})`,color:P.white,border:"none",borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:6}}>🤖 IA</button>
+                <button onClick={()=>setShowNT(true)} style={{padding:"9px 20px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>+ Nueva Tarea</button>
+              </div>}
+            </div>
+
+            {splitView?(
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,alignItems:"start"}}>
+                {/* TAREAS POR HACER */}
+                <div>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,paddingBottom:8,borderBottom:`2px solid ${P.gold}`}}>
+                    <span style={{fontSize:16}}>📥</span>
+                    <span style={{fontWeight:800,color:P.black,fontSize:15}}>Mis tareas</span>
+                    <span style={{background:P.gold,color:P.black,borderRadius:99,fontWeight:800,fontSize:11,padding:"1px 8px",marginLeft:"auto"}}>{tareasPorHacer.length}</span>
+                  </div>
+                  {tareasPorHacer.length===0&&<div style={{textAlign:"center",padding:40,color:P.gray,fontSize:13,background:P.white,borderRadius:10,border:`1px dashed ${P.border}`}}>Sin tareas asignadas</div>}
+                  {tareasPorHacer.map(renderTask)}
+                </div>
+                {/* TAREAS ASIGNADAS */}
+                <div>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,paddingBottom:8,borderBottom:`2px solid ${P.goldD}`}}>
+                    <span style={{fontSize:16}}>📤</span>
+                    <span style={{fontWeight:800,color:P.black,fontSize:15}}>Tareas asignadas</span>
+                    <span style={{background:P.goldD,color:P.white,borderRadius:99,fontWeight:800,fontSize:11,padding:"1px 8px",marginLeft:"auto"}}>{tareasAsignadas.length}</span>
+                  </div>
+                  {tareasAsignadas.length===0&&<div style={{textAlign:"center",padding:40,color:P.gray,fontSize:13,background:P.white,borderRadius:10,border:`1px dashed ${P.border}`}}>No has asignado tareas aún</div>}
+                  {tareasAsignadas.map(renderTask)}
+                </div>
+              </div>
+            ):(
+              <>
+                {all.length===0&&<div style={{textAlign:"center",padding:60,color:P.gray}}>No hay tareas aún.</div>}
+                {all.map(renderTask)}
+              </>
+            )}
+          </>;
+        })()}
 
         {/* ── CLIENTES ── */}
         {view==="clients"&&<>
@@ -714,7 +759,8 @@ function App(){
             <h2 style={{margin:0,color:P.black,fontSize:19,fontWeight:800}}>🏢 Clientes</h2>
             {canClients&&<button onClick={openNC} style={{padding:"8px 18px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>+ Nuevo Cliente</button>}
           </div>
-          {!canClients&&<div style={{background:"#FFF8E7",border:`1px solid ${P.border}`,borderRadius:10,padding:12,color:P.goldD,fontSize:13,marginBottom:14}}>Solo Jefe y Coordinador pueden gestionar clientes.</div>}
+          {!canClients&&!canAddPeriodos&&<div style={{background:"#FFF8E7",border:`1px solid ${P.border}`,borderRadius:10,padding:12,color:P.goldD,fontSize:13,marginBottom:14}}>Solo Jefe y Coordinador pueden gestionar clientes.</div>}
+          {!canClients&&canAddPeriodos&&<div style={{background:"#F0F9FF",border:`1px solid ${P.ai}`,borderRadius:10,padding:12,color:"#0369A1",fontSize:13,marginBottom:14}}>📅 Puedes agregar periodos a los clientes existentes.</div>}
           {clients.length===0&&<div style={{textAlign:"center",padding:40,color:P.gray}}>No hay clientes aún.</div>}
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}}>
             {clients.map(cl=><div key={cl.id} style={{background:P.white,borderRadius:12,border:`1.5px solid ${P.border}`,padding:18}}>
@@ -727,6 +773,7 @@ function App(){
                   <button onClick={()=>openEC(cl)} style={{padding:"4px 8px",background:P.lightG,border:`1px solid ${P.border}`,borderRadius:6,cursor:"pointer"}}>✏️</button>
                   <button onClick={()=>fbDel("clients",cl.id)} style={{padding:"4px 8px",background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:6,cursor:"pointer"}}>🗑️</button>
                 </div>}
+                {!canClients&&canAddPeriodos&&<button onClick={()=>openEC(cl)} style={{padding:"4px 10px",background:"#F0F9FF",border:`1px solid ${P.ai}`,borderRadius:6,cursor:"pointer",fontSize:11,fontWeight:700,color:"#0369A1"}}>📅 +Periodo</button>}
               </div>
               <div style={{fontSize:11,fontWeight:700,color:P.goldD,marginBottom:6,letterSpacing:1}}>TIPOS DE DEVOLUCIÓN</div>
               <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}}>
@@ -858,8 +905,8 @@ function App(){
         <BtnRow onCancel={()=>{setShowCP(false);setPErr("");setPf({current:"",nuevo:"",confirm:""}); }} onConfirm={savePass} label="Guardar" color={P.black}/>
       </Modal>}
 
-      {showCF&&<Modal title={editCl?"✏️ Editar Cliente":"🏢 Nuevo Cliente"} onClose={()=>setShowCF(false)}>
-        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Compañía</label>
+      {showCF&&<Modal title={editCl?(canClients?"✏️ Editar Cliente":"📅 Agregar Periodo"):"🏢 Nuevo Cliente"} onClose={()=>setShowCF(false)}>
+        {canClients&&<><label style={{fontSize:13,fontWeight:600,color:P.dark}}>Compañía</label>
         <input value={clf.compania} onChange={e=>setClf({...clf,compania:e.target.value})} style={iSt}/>
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Tipos de Devolución</label>
         <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:6,marginBottom:12,maxHeight:200,overflowY:"auto",padding:8,border:`1px solid ${P.border}`,borderRadius:7,background:P.lightG}}>
@@ -867,11 +914,12 @@ function App(){
             <input type="checkbox" checked={clf.tiposDevolucion.includes(td)} onChange={()=>toggleTipoDevolucion(td)} style={{accentColor:P.goldD,width:14,height:14}}/>{td}
           </label>)}
         </div>
-        {clf.tiposDevolucion.length===0&&<p style={{fontSize:11,color:P.danger,margin:"-8px 0 10px"}}>* Selecciona al menos uno</p>}
+        {clf.tiposDevolucion.length===0&&<p style={{fontSize:11,color:P.danger,margin:"-8px 0 10px"}}>* Selecciona al menos uno</p>}</>}
+        {!canClients&&canAddPeriodos&&editCl&&<div style={{background:"#F0F9FF",border:`1px solid ${P.ai}`,borderRadius:8,padding:"8px 12px",marginBottom:14,fontSize:12,color:"#0369A1"}}>📋 <strong>{clf.compania}</strong> — solo puedes agregar periodos.</div>}
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Periodos</label>
         {clf.periodos.map((p,i)=><div key={i} style={{display:"flex",gap:6,marginTop:4,marginBottom:6}}>
           <input value={p} onChange={e=>{const ps=[...clf.periodos];ps[i]=e.target.value;setClf({...clf,periodos:ps});}} placeholder="Ej: Enero 2025" style={{...iSt,marginTop:0,marginBottom:0,flex:1}}/>
-          {clf.periodos.length>1&&<button onClick={()=>setClf({...clf,periodos:clf.periodos.filter((_,idx)=>idx!==i)})} style={{padding:"0 10px",background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:7,cursor:"pointer",color:P.danger,fontWeight:700,fontSize:16}}>×</button>}
+          {canClients&&clf.periodos.length>1&&<button onClick={()=>setClf({...clf,periodos:clf.periodos.filter((_,idx)=>idx!==i)})} style={{padding:"0 10px",background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:7,cursor:"pointer",color:P.danger,fontWeight:700,fontSize:16}}>×</button>}
         </div>)}
         <button onClick={()=>setClf({...clf,periodos:[...clf.periodos,""]})} style={{width:"100%",padding:7,border:`1.5px dashed ${P.border}`,borderRadius:7,background:"transparent",color:P.gray,cursor:"pointer",fontSize:13,marginBottom:14,fontWeight:600}}>+ Agregar periodo</button>
         <BtnRow onCancel={()=>setShowCF(false)} onConfirm={saveCl} label={editCl?"Guardar cambios":"Crear"} color={P.black}/>
