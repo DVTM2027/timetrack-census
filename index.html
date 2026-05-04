@@ -529,6 +529,17 @@ function App(){
     return tasks.filter(t=>String(t.assignedTo)===String(cur.id));
   };
 
+  // Extrae sub-tareas de todas las tareas como items planos con referencia al padre
+  const allSubtasks=()=>tasks.flatMap(t=>(t.subtasks||[]).map(st=>({...st,_parentId:t.id,_parentTitle:t.title,_isSubtask:true})));
+
+  const mySubtasks=()=>{
+    if(!cur)return[];
+    const subs=allSubtasks();
+    if(isJ||isC)return subs;
+    if(isSr||isSs)return subs.filter(st=>String(st.assignedTo)===String(cur.id)||String(st.assignedBy)===String(cur.id));
+    return subs.filter(st=>String(st.assignedTo)===String(cur.id));
+  };
+
   const myProjects=()=>{
     if(!cur)return[];
     if(isJ||isC)return projects;
@@ -782,8 +793,11 @@ function App(){
           const all=sortedTasks();
           const splitView=isC||isSr||isSs;
           const myProjs=myProjects();
-          const tareasPorHacer=splitView?all.filter(t=>String(t.assignedTo)===String(cur.id)):all;
-          const tareasAsignadas=splitView?all.filter(t=>String(t.assignedTo)!==String(cur.id)&&String(t.assignedBy)===String(cur.id)):[];
+          const allMySubs=mySubtasks();
+          // Mis tareas: asignadas a mí (tareas + sub-tareas)
+          const tareasPorHacer=splitView?[...all.filter(t=>String(t.assignedTo)===String(cur.id)),...allMySubs.filter(st=>String(st.assignedTo)===String(cur.id))]:all;
+          // Tareas asignadas: las que yo asigné (tareas + sub-tareas)
+          const tareasAsignadas=splitView?[...all.filter(t=>String(t.assignedTo)!==String(cur.id)&&String(t.assignedBy)===String(cur.id)),...allMySubs.filter(st=>String(st.assignedBy)===String(cur.id)&&String(st.assignedTo)!==String(cur.id))]:[];
           // proyectos propios (solo Sr/SemSr los ven en su columna)
           const misProyectos=(isSr||isSs)?myProjs.filter(p=>String(p.assignedTo)===String(cur.id)):[];
           const proyectosAsignados=canAssignProjects?myProjs.filter(p=>String(p.assignedBy)===String(cur.id)&&(isJ||isC)):[];
@@ -792,10 +806,9 @@ function App(){
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,flexWrap:"wrap",gap:8}}>
               <h2 style={{margin:0,color:P.black,fontSize:19,fontWeight:800}}>📋 Tablero de Tareas</h2>
               <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                {canAssign&&<button onClick={()=>setShowAI(true)} style={{padding:"9px 16px",background:`linear-gradient(135deg,#0284C7,${P.ai})`,color:P.white,border:"none",borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>🤖 IA</button>}
                 {isC&&<button onClick={()=>setShowActMgr(true)} style={{padding:"9px 14px",background:"#F0F9FF",color:"#0369A1",border:`1px solid ${P.ai}`,borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>⚙️ Actividades</button>}
-                {canAssign&&<button onClick={()=>setShowNT(true)} style={{padding:"9px 20px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>+ Nueva Tarea</button>}
                 {canAssignProjects&&<button onClick={()=>setShowNProy(true)} style={{padding:"9px 16px",background:P.proj,color:P.white,border:"none",borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>🗂 Nuevo Proyecto</button>}
+                {canAssign&&<button onClick={()=>setShowNT(true)} style={{padding:"9px 20px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>+ Nueva Tarea</button>}
               </div>
             </div>
 
