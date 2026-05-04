@@ -562,7 +562,9 @@ function App(){
   const nav=[{id:"board",icon:"📋",label:"Tablero"},{id:"clients",icon:"🏢",label:"Clientes"},{id:"colabs",icon:"👥",label:"Colaboradores"},{id:"report",icon:"📊",label:"Reportes"},...(isJ?[{id:"team",icon:"🏠",label:"Equipo"}]:[])];
 
   // Tareas ordenadas: urgentes primero
-  const sortedTasks=()=>[...myTasks()].sort((a,b)=>(b.urgente?1:0)-(a.urgente?1:0));
+  const sortedTasks=()=>[...myTasks()]
+    .filter(t=>t.status!=="done")
+    .sort((a,b)=>(b.urgente?1:0)-(a.urgente?1:0));
 
   // ── Renderizar tarjeta de tarea/sub-tarea ──────────────────────────────
   const renderTask=task=>{
