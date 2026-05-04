@@ -530,13 +530,12 @@ function App(){
   };
 
   // Extrae sub-tareas de todas las tareas como items planos con referencia al padre
-  const allSubtasks=()=>tasks.flatMap(t=>(t.subtasks||[]).map(st=>({...st,_parentId:t.id,_parentTitle:t.title,_isSubtask:true})));
+  const allSubtaskItems=()=>tasks.flatMap(t=>(t.subtasks||[]).map(st=>({...st,_parentId:t.id,_parentTitle:t.title,_isSubtask:true})));
 
   const mySubtasks=()=>{
     if(!cur)return[];
-    const subs=allSubtasks();
-    if(isJ||isC)return subs;
-    if(isSr||isSs)return subs.filter(st=>String(st.assignedTo)===String(cur.id)||String(st.assignedBy)===String(cur.id));
+    const subs=allSubtaskItems();
+    // Todos los roles ven sus sub-tareas asignadas
     return subs.filter(st=>String(st.assignedTo)===String(cur.id));
   };
 
@@ -794,10 +793,18 @@ function App(){
           const splitView=isC||isSr||isSs;
           const myProjs=myProjects();
           const allMySubs=mySubtasks();
-          // Mis tareas: asignadas a mí (tareas + sub-tareas)
-          const tareasPorHacer=splitView?[...all.filter(t=>String(t.assignedTo)===String(cur.id)),...allMySubs.filter(st=>String(st.assignedTo)===String(cur.id))]:all;
-          // Tareas asignadas: las que yo asigné (tareas + sub-tareas)
-          const tareasAsignadas=splitView?[...all.filter(t=>String(t.assignedTo)!==String(cur.id)&&String(t.assignedBy)===String(cur.id)),...allMySubs.filter(st=>String(st.assignedBy)===String(cur.id)&&String(st.assignedTo)!==String(cur.id))]:[];
+
+          // Mis tareas: tareas asignadas a mí + sub-tareas asignadas a mí
+          const tareasPorHacer=splitView
+            ?[...all.filter(t=>String(t.assignedTo)===String(cur.id)),
+               ...allMySubs.filter(st=>String(st.assignedTo)===String(cur.id))]
+            :[...all,...allMySubs.filter(st=>String(st.assignedTo)===String(cur.id))];
+
+          // Tareas asignadas: tareas que yo asigné a otros + sub-tareas que yo asigné a otros
+          const tareasAsignadas=splitView
+            ?[...all.filter(t=>String(t.assignedBy)===String(cur.id)&&String(t.assignedTo)!==String(cur.id)),
+               ...allMySubs.filter(st=>String(st.assignedBy)===String(cur.id)&&String(st.assignedTo)!==String(cur.id))]
+            :[];
           // proyectos propios (solo Sr/SemSr los ven en su columna)
           const misProyectos=(isSr||isSs)?myProjs.filter(p=>String(p.assignedTo)===String(cur.id)):[];
           const proyectosAsignados=canAssignProjects?myProjs.filter(p=>String(p.assignedBy)===String(cur.id)&&(isJ||isC)):[];
@@ -844,10 +851,10 @@ function App(){
                 {(isJ||isC)&&myProjs.length>0&&<>
                   <div style={{fontSize:13,fontWeight:700,color:P.proj,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>🗂 Proyectos activos <span style={{background:"#CCFBF1",color:P.proj,borderRadius:99,fontSize:11,padding:"1px 8px",fontWeight:800}}>{myProjs.length}</span></div>
                   {myProjs.map(p=><ProyectoCard key={p.id} proj={p} cur={cur} users={users} clients={clients} onUpdate={()=>{}} onDelete={id=>fbDel("projects",id)}/>)}
-                  {all.length>0&&<div style={{fontSize:13,fontWeight:700,color:P.goldD,margin:"16px 0 10px",display:"flex",alignItems:"center",gap:6}}>📋 Tareas <span style={{background:P.lightG,color:P.goldD,borderRadius:99,fontSize:11,padding:"1px 8px",fontWeight:800,border:`1px solid ${P.border}`}}>{all.length}</span></div>}
+                  {tareasPorHacer.length>0&&<div style={{fontSize:13,fontWeight:700,color:P.goldD,margin:"16px 0 10px",display:"flex",alignItems:"center",gap:6}}>📋 Tareas <span style={{background:P.lightG,color:P.goldD,borderRadius:99,fontSize:11,padding:"1px 8px",fontWeight:800,border:`1px solid ${P.border}`}}>{tareasPorHacer.length}</span></div>}
                 </>}
-                {all.length===0&&myProjs.length===0&&<div style={{textAlign:"center",padding:60,color:P.gray}}>No hay tareas ni proyectos aún.</div>}
-                {all.map(renderTask)}
+                {tareasPorHacer.length===0&&myProjs.length===0&&<div style={{textAlign:"center",padding:60,color:P.gray}}>No hay tareas ni proyectos aún.</div>}
+                {tareasPorHacer.map(renderTask)}
               </>
             )}
           </>;
