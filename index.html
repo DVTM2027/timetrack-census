@@ -615,11 +615,7 @@ function App(){
             {!isD&&!isQ&&isP&&isAssignee&&<button onClick={()=>reanudar(task.id)} style={{padding:"6px 10px",background:P.success,color:P.white,border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:11}}>▶ Reanudar</button>}
             {!isD&&!isQ&&isAssignee&&<button onClick={()=>iniciarComplete(task.id)} style={{padding:"6px 12px",background:P.gold,color:P.black,border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:12}}>✅ Completar</button>}
             {!isSub&&!isD&&!isQ&&canSub&&<button onClick={()=>setShowST(task.id)} style={{padding:"6px 12px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:7,fontWeight:600,cursor:"pointer",fontSize:12}}>+ Sub</button>}
-            {isSub&&(()=>{
-              const assignerRole=gU(task.assignedBy)?.role||"junior";
-              const canDel=String(task.assignedBy)===String(cur.id)||ROLE_ORDER.indexOf(role)<=ROLE_ORDER.indexOf(assignerRole);
-              return canDel?<button onClick={()=>setShowDel(task.id)} style={{padding:"5px 9px",background:"#FEF2F2",color:P.danger,border:"1px solid #FECACA",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:12}}>🗑️</button>:null;
-            })()}
+            {isSub&&canAssign&&<button onClick={()=>setShowDel(task.id)} style={{padding:"5px 9px",background:"#FEF2F2",color:P.danger,border:"1px solid #FECACA",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:12}}>🗑️</button>}
           </div>
         </div>
       </div>
