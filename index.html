@@ -1,5 +1,4 @@
-{!isSub&&!isD&&!isR&&<button onClick={()=>toggleUrgente(task.id)} style={{padding:"5px 9px",background:task.urgente?P.urgent:"transparent",color:task.urgente?P.white:P.urgent,border:`1px solid ${P.urgent}`,borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:700}}>⚡</button>}
-            {extendedTasks[task.id]?.active&&<div style={{fontSize:10,color:"#7C3AED",fontWeight:700,textAlign:"right"}}>🌙 {fmtT(liveExtMs(task.id))} ext.</div><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
@@ -34,8 +33,7 @@ const{useState,useEffect}=React;
 const TASKS_LIST=["Elaboración de pruebas","Seguimiento","Revisión de pruebas","Levantamiento y desarrollo de análisis inicial","Revisión de análisis","Reunión interna","Reunión externa","Gestión de documentos (entrega y recepción)","Gestión de documentos archivo"];
 const TIPOS_DEVOLUCION=["Devolución de IVA Exportador","Devolución de IVA Proveedor Directo","Devolución Retenciones de IVA","Devolución de IVA - Interes Social","Devolución de IVA - Proyectos Inmobiliarios","Renta - Pago indebido","Renta - Pago en exceso","Otros pagos indebidos o en exceso"];
 const AVATARS=["👩‍💼","👨‍💼","👩‍💻","👨‍💻","👩‍🔬","👨‍🔬","👩‍🎓","👨‍🎓","🧑‍💼","👩‍🏫","👨‍🏫","🦸‍♀️","🦸‍♂️","🧙‍♀️","🧙‍♂️","🐱","🦊","🐼","🐨","🦁","🐯","🦋","🌟","⚡","🔥","🌈","🎯","🚀","💎","🌸"];
-
-const P={gold:"#C9A84C",goldL:"#F0D080",goldD:"#8B6914",black:"#0F0F0F",dark:"#1A1A1A",gray:"#4A4A4A",lightG:"#F5F5F0",border:"#D4A843",white:"#FFFFFF",danger:"#C0392B",success:"#2E7D32",urgent:"#7B2D8B",ai:"#0EA5E9",proj:"#0F766E"};
+const P={gold:"#C9A84C",goldL:"#F0D080",goldD:"#8B6914",black:"#0F0F0F",dark:"#1A1A1A",gray:"#4A4A4A",lightG:"#F5F5F0",border:"#D4A843",white:"#FFFFFF",danger:"#C0392B",success:"#2E7D32",urgent:"#7B2D8B",ai:"#0EA5E9",proj:"#0F766E",ext:"#7C3AED"};
 const ROLES={jefe:{label:"💼 Jefe",color:P.black,bg:"#F0E8C8"},coordinadora:{label:"👑 Coordinador",color:P.goldD,bg:"#FDF6DC"},senior:{label:"🔵 Senior",color:"#1A4A7A",bg:"#D6E8F7"},semsenior:{label:"🟡 Semi Senior",color:"#7A4A00",bg:"#FFF0CC"},junior:{label:"🟢 Junior",color:"#1A5C2A",bg:"#D6F0DC"}};
 const ROLE_ORDER=["jefe","coordinadora","senior","semsenior","junior"];
 const CAN_ASSIGN_TO={jefe:["coordinadora","senior","semsenior","junior"],coordinadora:["senior","semsenior","junior"],senior:["semsenior","junior"],semsenior:["junior"],junior:[]};
@@ -71,8 +69,7 @@ const ts=()=>Date.now();
 const msToH=ms=>Math.round((ms/3600000)*100)/100;
 const fmtT=ms=>{const s=Math.floor(ms/1000),m=Math.floor(s/60),h=Math.floor(m/60);return h>0?`${h}h ${m%60}m ${s%60}s`:m>0?`${m}m ${s%60}s`:`${s}s`;};
 const fmtDate=ms=>new Date(ms).toLocaleDateString("es-EC",{day:"2-digit",month:"short",year:"numeric"});
-// status: inprogress | paused | done | queued
-const mkTask=o=>({id:"t"+ts(),status:"inprogress",startedAt:ts(),pausedAt:null,activeMs:0,completedAt:null,hours:null,autopaused:false,observacion:null,eventoNombre:null,urgente:false,parentId:null,parentTitle:null,...o});
+const mkTask=o=>({id:"t"+ts(),status:"inprogress",startedAt:ts(),pausedAt:null,activeMs:0,completedAt:null,hours:null,autopaused:false,observacion:null,eventoNombre:null,urgente:false,parentId:null,parentTitle:null,extendedMs:0,...o});
 const liveMs=i=>(i.status==="done"||i.status==="paused"||i.status==="queued")?i.activeMs:i.activeMs+(ts()-i.startedAt);
 const isWorkHour=()=>{const t=new Date().getHours()*60+new Date().getMinutes();return t>=540&&t<1050;};
 const rc=r=>ROLES[r]?.color||P.gray;
@@ -94,6 +91,7 @@ function Modal({title,onClose,children,wide}){
     </div>
   </div>;
 }
+
 function BtnRow({onCancel,onConfirm,label,color,disabled}){
   return <div style={{display:"flex",gap:10}}>
     <button onClick={onCancel} style={{flex:1,padding:10,border:`1.5px solid ${P.border}`,borderRadius:8,background:P.white,cursor:"pointer",fontWeight:600,color:P.gray}}>Cancelar</button>
@@ -101,7 +99,6 @@ function BtnRow({onCancel,onConfirm,label,color,disabled}){
   </div>;
 }
 
-// ── PROYECTO ──────────────────────────────────────────────────────────────
 function ProyectoCard({proj,cur,users,clients,tasks,onDelete}){
   const[expanded,setExpanded]=useState(false);
   const[showIniciar,setShowIniciar]=useState(false);
@@ -110,7 +107,6 @@ function ProyectoCard({proj,cur,users,clients,tasks,onDelete}){
   const[descSesion,setDescSesion]=useState("");
   const[obsSesion,setObsSesion]=useState("");
   const[nst,setNst]=useState({title:"",assignedTo:""});
-
   const cl=clients.find(c=>String(c.id)===String(proj.clientId));
   const asignador=users.find(u=>String(u.id)===String(proj.assignedBy));
   const sesiones=proj.sesiones||[];
@@ -119,8 +115,6 @@ function ProyectoCard({proj,cur,users,clients,tasks,onDelete}){
   const subTo=users.filter(u=>u.role==="junior");
   const isOwner=String(proj.assignedTo)===String(cur.id);
   const isCompletado=proj.status==="completado";
-  // sub-tareas de este proyecto (tasks con parentId = proj.id)
-  const projSubs=tasks.filter(t=>String(t.parentId)===String(proj.id));
 
   const iniciarSesion=async()=>{
     if(!descSesion.trim())return;
@@ -142,7 +136,6 @@ function ProyectoCard({proj,cur,users,clients,tasks,onDelete}){
   };
   const addSubtask=async()=>{
     if(!nst.title||!nst.assignedTo)return;
-    // Guardar como tarea independiente en colección "tasks"
     const st=mkTask({title:nst.title,assignedTo:nst.assignedTo,assignedBy:cur.id,parentId:proj.id,parentTitle:proj.nombre,clientId:proj.clientId,tipoDevolucion:proj.tipoDevolucion,periodo:proj.periodo});
     await fbSet("tasks",st.id,st);
     setNst({title:"",assignedTo:""});setShowNSub(false);
@@ -163,14 +156,13 @@ function ProyectoCard({proj,cur,users,clients,tasks,onDelete}){
           {proj.periodo&&<span style={{fontSize:11,color:P.gray,background:P.lightG,padding:"2px 8px",borderRadius:99}}>📅 {proj.periodo}</span>}
           {asignador&&<span style={{fontSize:11,color:P.gray}}>por {asignador.firstName}</span>}
           <span style={{fontSize:11,color:P.gray}}>📁 {sesiones.length} sesión{sesiones.length!==1?"es":""}</span>
-          {projSubs.length>0&&<span style={{fontSize:11,color:P.gray}}>🔗 {projSubs.length} sub-tarea{projSubs.length!==1?"s":""}</span>}
         </div>
       </div>
       <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
         <div style={{background:sesionActiva?"#CCFBF1":P.lightG,border:`1.5px solid ${sesionActiva?P.proj:P.border}`,borderRadius:8,padding:"6px 14px",textAlign:"center",minWidth:120}}>
-          <div style={{fontSize:10,fontWeight:700,color:P.proj,letterSpacing:1}}>⏱ TOTAL PROYECTO</div>
+          <div style={{fontSize:10,fontWeight:700,color:P.proj}}>⏱ TOTAL</div>
           <div style={{fontSize:15,fontWeight:800,color:P.black,fontVariantNumeric:"tabular-nums"}}>{fmtT(totalMs)}</div>
-          <div style={{fontSize:10,color:P.gray}}>≈ {msToH(totalMs)}h acumuladas</div>
+          <div style={{fontSize:10,color:P.gray}}>≈ {msToH(totalMs)}h</div>
         </div>
         {!isCompletado&&isOwner&&<div style={{display:"flex",gap:5,flexWrap:"wrap",justifyContent:"flex-end"}}>
           {!sesionActiva&&<button onClick={()=>setShowIniciar(true)} style={{padding:"6px 12px",background:P.proj,color:P.white,border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:12}}>▶ Iniciar sesión</button>}
@@ -187,13 +179,14 @@ function ProyectoCard({proj,cur,users,clients,tasks,onDelete}){
     {sesionActiva&&<div style={{marginTop:10,background:"#F0FDFA",border:`1px solid #99F6E4`,borderRadius:8,padding:"10px 14px"}}>
       <div style={{fontSize:11,fontWeight:700,color:P.proj,marginBottom:4}}>SESIÓN EN CURSO</div>
       <div style={{fontSize:13,color:P.dark,marginBottom:4}}>📝 {sesionActiva.desc}</div>
-      <div style={{fontSize:12,fontWeight:700,color:P.proj,fontVariantNumeric:"tabular-nums"}}>⏱ {fmtT(sesionActiva.activeMs+(ts()-sesionActiva.startedAt))}</div>
+      <div style={{fontSize:12,fontWeight:700,color:P.proj}}>{fmtT(sesionActiva.activeMs+(ts()-sesionActiva.startedAt))}</div>
     </div>}
     {expanded&&<div style={{marginTop:10,borderTop:`1px solid ${P.border}`,paddingTop:10}}>
-      <div style={{fontSize:11,fontWeight:700,color:P.goldD,marginBottom:8,letterSpacing:1}}>HISTORIAL DE SESIONES</div>
+      <div style={{fontSize:11,fontWeight:700,color:P.goldD,marginBottom:8}}>HISTORIAL DE SESIONES</div>
       {sesiones.filter(s=>s.status==="cerrada").length===0&&<div style={{fontSize:12,color:P.gray,fontStyle:"italic",marginBottom:8}}>Sin sesiones cerradas aún.</div>}
       {sesiones.filter(s=>s.status==="cerrada").map((s,i)=><div key={s.id} style={{display:"flex",justifyContent:"space-between",padding:"8px 10px",background:i%2===0?P.white:P.lightG,borderRadius:7,marginBottom:4,border:`1px solid ${P.border}44`,flexWrap:"wrap",gap:6}}>
-        <div><div style={{fontSize:12,fontWeight:600,color:P.black}}>📝 {s.desc}</div>
+        <div>
+          <div style={{fontSize:12,fontWeight:600,color:P.black}}>📝 {s.desc}</div>
           {s.obs&&<div style={{fontSize:11,color:P.gray,marginTop:2}}>💬 {s.obs}</div>}
           <div style={{fontSize:11,color:P.gray,marginTop:2}}>📅 {fmtDate(s.fecha)}</div>
         </div>
@@ -203,10 +196,9 @@ function ProyectoCard({proj,cur,users,clients,tasks,onDelete}){
         </div>
       </div>)}
     </div>}
-    {showIniciar&&<Modal title="▶ Iniciar Sesión de Trabajo" onClose={()=>setShowIniciar(false)}>
-      <p style={{fontSize:13,color:P.gray,margin:"0 0 12px"}}>Describe brevemente en qué vas a trabajar:</p>
+    {showIniciar&&<Modal title="▶ Iniciar Sesión" onClose={()=>setShowIniciar(false)}>
       <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Descripción *</label>
-      <textarea value={descSesion} onChange={e=>setDescSesion(e.target.value)} placeholder="Ej: Revisión de documentos del cliente..." style={{...iSt,height:80,resize:"vertical"}} autoFocus/>
+      <textarea value={descSesion} onChange={e=>setDescSesion(e.target.value)} placeholder="¿En qué vas a trabajar hoy?" style={{...iSt,height:80,resize:"vertical"}} autoFocus/>
       <div style={{background:"#F0FDFA",border:`1px solid #99F6E4`,borderRadius:8,padding:"9px 12px",marginBottom:14,fontSize:12,color:P.proj}}>⏱️ El cronómetro iniciará al confirmar.</div>
       <BtnRow onCancel={()=>setShowIniciar(false)} onConfirm={iniciarSesion} label="▶ Iniciar" color={P.proj} disabled={!descSesion.trim()}/>
     </Modal>}
@@ -217,17 +209,17 @@ function ProyectoCard({proj,cur,users,clients,tasks,onDelete}){
         <div style={{fontSize:18,fontWeight:800,color:P.proj}}>{sesionActiva?fmtT(sesionActiva.activeMs+(ts()-sesionActiva.startedAt)):""}</div>
       </div>
       <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Observación <span style={{fontWeight:400,color:P.gray}}>(opcional)</span></label>
-      <textarea value={obsSesion} onChange={e=>setObsSesion(e.target.value)} placeholder="Ej: Completé la revisión inicial..." style={{...iSt,height:70,resize:"vertical"}}/>
+      <textarea value={obsSesion} onChange={e=>setObsSesion(e.target.value)} placeholder="¿Qué lograste en esta sesión?" style={{...iSt,height:70,resize:"vertical"}}/>
       <BtnRow onCancel={()=>setShowCerrar(false)} onConfirm={cerrarSesion} label="⏹ Cerrar sesión" color={P.goldD}/>
     </Modal>}
-    {showNSub&&<Modal title="➕ Nueva Sub-tarea" onClose={()=>setShowNSub(false)}>
+    {showNSub&&<Modal title="➕ Sub-tarea del Proyecto" onClose={()=>setShowNSub(false)}>
       <div style={{background:"#F0F9FF",border:`1px solid ${P.ai}`,borderRadius:8,padding:"8px 12px",marginBottom:14,fontSize:12,color:"#0369A1"}}>La sub-tarea aparecerá en el tablero del Junior asignado.</div>
       <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Actividad</label>
       <select value={nst.title} onChange={e=>setNst({...nst,title:e.target.value})} style={iSt}>
         <option value="">Selecciona actividad...</option>
         {TASKS_LIST.map(t=><option key={t} value={t}>{t}</option>)}
       </select>
-      <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Asignar a (Junior)</label>
+      <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Asignar a</label>
       <select value={nst.assignedTo} onChange={e=>setNst({...nst,assignedTo:e.target.value})} style={iSt}>
         <option value="">Selecciona persona...</option>
         {subTo.map(u=><option key={u.id} value={u.id}>{u.avatar} {u.firstName} {u.lastName}</option>)}
@@ -237,7 +229,6 @@ function ProyectoCard({proj,cur,users,clients,tasks,onDelete}){
   </div>;
 }
 
-// ── EDITAR COLABORADOR ──────────────────────────────────────────────────
 function EditColabModal({user,onSave,onClose}){
   const[f,setF]=useState({firstName:user.firstName,lastName:user.lastName,email:user.email,password:user.password,role:user.role,avatar:user.avatar});
   const[showAv,setShowAv]=useState(false);
@@ -253,7 +244,7 @@ function EditColabModal({user,onSave,onClose}){
     <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Avatar</label>
     <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:12,marginTop:4}}>
       <div style={{width:44,height:44,borderRadius:10,background:rbg(f.role),border:`2px solid ${P.gold}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>{f.avatar}</div>
-      <button onClick={()=>setShowAv(v=>!v)} style={{padding:"7px 14px",background:P.lightG,border:`1.5px solid ${P.border}`,borderRadius:8,cursor:"pointer",fontWeight:600,fontSize:12,color:P.dark}}>🎨 Cambiar</button>
+      <button onClick={()=>setShowAv(v=>!v)} style={{padding:"7px 14px",background:P.lightG,border:`1.5px solid ${P.border}`,borderRadius:8,cursor:"pointer",fontWeight:600,fontSize:12}}>🎨 Cambiar</button>
     </div>
     {showAv&&<div style={{display:"grid",gridTemplateColumns:"repeat(8,1fr)",gap:5,marginBottom:12,background:P.lightG,borderRadius:8,padding:10,border:`1px solid ${P.border}`}}>
       {AVATARS.map(a=><div key={a} onClick={()=>{setF(v=>({...v,avatar:a}));setShowAv(false);}} style={{fontSize:22,textAlign:"center",padding:5,borderRadius:7,cursor:"pointer",background:f.avatar===a?P.white:"transparent",border:`2px solid ${f.avatar===a?P.gold:"transparent"}`}}>{a}</div>)}
@@ -262,7 +253,6 @@ function EditColabModal({user,onSave,onClose}){
   </Modal>;
 }
 
-// ── REPORTE ──────────────────────────────────────────────────────────────
 function ReporteView({tasks,projects,clients,users}){
   const[desde,setDesde]=useState("");const[hasta,setHasta]=useState("");const[res,setRes]=useState(null);
   const gC=id=>clients.find(c=>String(c.id)===String(id));
@@ -278,7 +268,8 @@ function ReporteView({tasks,projects,clients,users}){
       const ha=t.status==="done"?(t.hours||0):msToH(t.status==="paused"||t.status==="queued"?t.activeMs:t.activeMs+(ahora-t.startedAt));
       const estado=t.status==="done"?"Completada":t.status==="paused"?"Pausada":t.status==="queued"?"En cola":"En progreso";
       const tipo=t.parentId?"Sub-tarea":"Tarea";
-      filas.push({tramite,nombre:persona?.name||"—",horas:ha,actividad:t.title,tipo,padre:t.parentTitle||"—",observacion:t.observacion||"—",fecha:t.completedAt?new Date(t.completedAt).toLocaleDateString("es-EC"):"En curso",estado});
+      const hExt=msToH(t.extendedMs||0);
+      filas.push({tramite,nombre:persona?.name||"—",horas:ha,hExt,actividad:t.title,tipo,padre:t.parentTitle||"—",observacion:t.observacion||"—",fecha:t.completedAt?new Date(t.completedAt).toLocaleDateString("es-EC"):"En curso",estado});
     });
     projects.forEach(proj=>{
       const cl=gC(proj.clientId);
@@ -286,21 +277,22 @@ function ReporteView({tasks,projects,clients,users}){
       const persona=gU(proj.assignedTo);
       (proj.sesiones||[]).filter(s=>s.status==="cerrada").forEach(s=>{
         const fecha=new Date(s.fecha);if(d&&fecha<d)return;if(h&&fecha>h)return;
-        filas.push({tramite,nombre:persona?.name||"—",horas:msToH(s.activeMs),actividad:`🗂 ${proj.nombre}`,tipo:"Proyecto",padre:"—",observacion:s.obs||"—",fecha:fmtDate(s.fecha),estado:proj.status==="completado"?"Completado":"Activo"});
+        filas.push({tramite,nombre:persona?.name||"—",horas:msToH(s.activeMs),hExt:0,actividad:`🗂 ${proj.nombre}`,tipo:"Proyecto",padre:"—",observacion:s.obs||"—",fecha:fmtDate(s.fecha),estado:proj.status==="completado"?"Completado":"Activo"});
       });
     });
     setRes(filas);
   };
   const descargar=()=>{
     if(!res?.length)return;
-    const hdrs=["Trámite","Nombre","Tipo","Actividad","Tarea Padre","Horas","Observación","Fecha","Estado"];
-    const rows=[hdrs,...res.map(r=>[r.tramite,r.nombre,r.tipo,r.actividad,r.padre,r.horas,r.observacion,r.fecha,r.estado])];
-    const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+    const hdrs=["Trámite","Nombre","Tipo","Actividad","Tarea Padre","Horas Normales","Horas Extendidas","Observación","Fecha","Estado"];
+    const rows=[hdrs,...res.map(r=>[r.tramite,r.nombre,r.tipo,r.actividad,r.padre,r.horas,r.hExt,r.observacion,r.fecha,r.estado])];
+    const csv=rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(",")).join("\n");
     const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
     const url=URL.createObjectURL(blob),a=document.createElement("a");
     a.href=url;a.download=`reporte_census_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url);
   };
   const total=res?res.reduce((s,r)=>s+r.horas,0):0;
+  const totalExt=res?res.reduce((s,r)=>s+(r.hExt||0),0):0;
   return <div>
     <h2 style={{margin:"0 0 20px",color:P.black,fontSize:19,fontWeight:800}}>📊 Reporte de Horas</h2>
     <div style={{background:P.white,borderRadius:12,border:`1px solid ${P.border}`,padding:20,marginBottom:16}}>
@@ -316,22 +308,28 @@ function ReporteView({tasks,projects,clients,users}){
     {res&&<div style={{background:P.white,borderRadius:12,border:`1px solid ${P.border}`,padding:20}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}}>
         <div><div style={{fontSize:16,fontWeight:800,color:P.black}}>Resultados</div><div style={{fontSize:13,color:P.gray}}>{res.length} registros</div></div>
-        <div style={{background:P.lightG,border:`1px solid ${P.border}`,borderRadius:8,padding:"8px 16px",textAlign:"center"}}>
-          <div style={{fontSize:11,fontWeight:700,color:P.goldD}}>TOTAL HORAS</div>
-          <div style={{fontSize:22,fontWeight:800,color:P.black}}>{Math.round(total*100)/100}h</div>
+        <div style={{display:"flex",gap:10}}>
+          <div style={{background:P.lightG,border:`1px solid ${P.border}`,borderRadius:8,padding:"8px 16px",textAlign:"center"}}>
+            <div style={{fontSize:11,fontWeight:700,color:P.goldD}}>HORAS NORMALES</div>
+            <div style={{fontSize:20,fontWeight:800,color:P.black}}>{Math.round(total*100)/100}h</div>
+          </div>
+          <div style={{background:"#F5F3FF",border:`1px solid ${P.ext}`,borderRadius:8,padding:"8px 16px",textAlign:"center"}}>
+            <div style={{fontSize:11,fontWeight:700,color:P.ext}}>🌙 HORAS EXT.</div>
+            <div style={{fontSize:20,fontWeight:800,color:P.ext}}>{Math.round(totalExt*100)/100}h</div>
+          </div>
         </div>
       </div>
       {res.length===0?<div style={{textAlign:"center",padding:40,color:P.gray}}>Sin registros.</div>
       :<div style={{overflowX:"auto"}}>
         <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-          <thead><tr style={{background:P.black}}>{["Trámite","Nombre","Tipo","Actividad","Tarea Padre","Horas","Observación","Fecha","Estado"].map(h=><th key={h} style={{padding:"10px",textAlign:"left",fontWeight:700,color:P.gold,whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
+          <thead><tr style={{background:P.black}}>{["Trámite","Nombre","Tipo","Actividad","Horas","H.Ext","Observación","Fecha","Estado"].map(h=><th key={h} style={{padding:"10px",textAlign:"left",fontWeight:700,color:P.gold,whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
           <tbody>{res.map((r,i)=><tr key={i} style={{borderBottom:`1px solid ${P.border}44`,background:i%2===0?P.white:P.lightG}}>
             <td style={{padding:"9px 10px",fontSize:11}}><div style={{fontWeight:600}}>{r.tramite.split(" | ")[0]}</div><div style={{color:P.goldD,fontSize:10}}>{r.tramite.split(" | ")[1]}</div></td>
             <td style={{padding:"9px 10px",fontWeight:600,whiteSpace:"nowrap"}}>{r.nombre}</td>
             <td style={{padding:"9px 10px"}}><span style={{fontSize:10,padding:"2px 7px",borderRadius:99,background:r.tipo==="Proyecto"?"#CCFBF1":r.tipo==="Sub-tarea"?"#E0F2FE":"#FDF6DC",color:r.tipo==="Proyecto"?P.proj:r.tipo==="Sub-tarea"?"#0369A1":P.goldD,fontWeight:700}}>{r.tipo}</span></td>
             <td style={{padding:"9px 10px",color:P.gray}}>{r.actividad}</td>
-            <td style={{padding:"9px 10px",color:P.gray,fontSize:11}}>{r.padre}</td>
             <td style={{padding:"9px 10px",fontWeight:800,color:P.goldD,whiteSpace:"nowrap"}}>{r.horas>0?`${r.horas}h`:"—"}</td>
+            <td style={{padding:"9px 10px",fontWeight:700,color:P.ext,whiteSpace:"nowrap"}}>{r.hExt>0?`🌙 ${r.hExt}h`:"—"}</td>
             <td style={{padding:"9px 10px",color:P.gray,fontSize:11,maxWidth:130}}>{r.observacion}</td>
             <td style={{padding:"9px 10px",color:P.gray,fontSize:11,whiteSpace:"nowrap"}}>{r.fecha}</td>
             <td style={{padding:"9px 10px"}}><span style={{fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:99,background:r.estado==="Completada"||r.estado==="Completado"?"#DCFCE7":"#FDF6DC",color:r.estado==="Completada"||r.estado==="Completado"?P.success:P.goldD}}>{r.estado}</span></td>
@@ -342,7 +340,6 @@ function ReporteView({tasks,projects,clients,users}){
   </div>;
 }
 
-// ── APP ──────────────────────────────────────────────────────────────────
 function App(){
   const[users,setUsers]=useState(INIT_USERS);
   const[cur,setCur]=useState(null);
@@ -356,6 +353,7 @@ function App(){
   const[fbReady,setFbReady]=useState(false);
   const[loading,setLoading]=useState(true);
   const[customActivities,setCustomActivities]=useState([]);
+  const[extendedTasks,setExtendedTasks]=useState({});
 
   const[showNT,setShowNT]=useState(false);
   const[showNotifP,setShowNotifP]=useState(false);
@@ -395,35 +393,32 @@ function App(){
 
   useEffect(()=>{
     const chk=()=>{const w=isWorkHour();tasks.forEach(t=>{
-      if(!w&&t.status==="inprogress")fbSet("tasks",t.id,{...t,status:"paused",activeMs:t.activeMs+(ts()-t.startedAt),pausedAt:ts(),autopaused:true});
+      if(!w&&t.status==="inprogress"&&!extendedTasks[t.id]?.active)fbSet("tasks",t.id,{...t,status:"paused",activeMs:t.activeMs+(ts()-t.startedAt),pausedAt:ts(),autopaused:true});
       if(w&&t.status==="paused"&&t.autopaused)fbSet("tasks",t.id,{...t,status:"inprogress",startedAt:ts(),pausedAt:null,autopaused:false});
     });};
     const iv=setInterval(chk,60000);return()=>clearInterval(iv);
-  },[tasks]);
+  },[tasks,extendedTasks]);
 
   const gU=id=>users.find(u=>String(u.id)===String(id));
   const gC=id=>clients.find(c=>String(c.id)===String(id));
   const allActivities=[...TASKS_LIST,...customActivities];
   const role=cur?.role,isJ=role==="jefe",isC=role==="coordinadora",isSr=role==="senior",isSs=role==="semsenior";
   const canAssign=isJ||isC||isSr||isSs;
-  const canClients=isJ||isC;
-  const canAddPeriodos=isSr||isSs;
-  const canAssignProjects=isJ||isC;
+  const canClients=isJ||isC||isSr;
+  const canAddPeriodos=isSs;
+  const canAssignProjects=isJ||isC||isSr||isSs;
   const isSplitView=isC||isSr||isSs;
   const assignTo=!cur?[]:isJ?users.filter(u=>u.id!==cur.id):users.filter(u=>CAN_ASSIGN_TO[role]?.includes(u.role));
   const subTo=!cur?[]:users.filter(u=>CAN_ASSIGN_TO[role]?.includes(u.role));
-  const projAssignTo=users.filter(u=>["senior","semsenior"].includes(u.role));
+  const projAssignTo=users.filter(u=>u.id!==cur?.id);
   const myN=cur?notifs.filter(n=>n.userId===cur.id):[];
   const unread=myN.filter(n=>!n.read).length;
   const pushN=(uid,msg,tipo,tt)=>setNotifs(p=>[{id:ts(),userId:uid,msg,tipo,taskTitle:tt,read:false},...p]);
 
-  // ── Mis tareas: solo las que me asignaron directamente (sin sub-tareas duplicadas del padre)
   const myTasks=()=>{
     if(!cur)return[];
     if(isJ||isC)return tasks;
-    // Senior/SemSenior: sus tareas + las que asignaron
     if(isSr||isSs)return tasks.filter(t=>String(t.assignedTo)===String(cur.id)||String(t.assignedBy)===String(cur.id));
-    // Junior: todas las tareas asignadas a él (incluye sub-tareas porque ya son documentos independientes)
     return tasks.filter(t=>String(t.assignedTo)===String(cur.id));
   };
 
@@ -434,15 +429,13 @@ function App(){
   };
 
   const hasActiveTask=uid=>tasks.some(t=>String(t.assignedTo)===String(uid)&&t.status==="inprogress");
+
   const startNextQueued=async uid=>{
     const q=tasks.filter(t=>String(t.assignedTo)===String(uid)&&t.status==="queued").sort((a,b)=>(b.urgente?1:0)-(a.urgente?1:0));
     if(q.length>0){const next={...q[0],status:"inprogress",startedAt:ts()};await fbSet("tasks",next.id,next);pushN(uid,"Tu siguiente tarea inició automáticamente","nueva",next.title);}
   };
 
-  const updTask=async(tid,fn)=>{
-    const t=tasks.find(t=>String(t.id)===String(tid));if(!t)return;
-    await fbSet("tasks",tid,fn(t));
-  };
+  const updTask=async(tid,fn)=>{const t=tasks.find(t=>String(t.id)===String(tid));if(!t)return;await fbSet("tasks",tid,fn(t));};
 
   const toggleUrgente=async tid=>{const t=tasks.find(t=>String(t.id)===String(tid));if(!t)return;await fbSet("tasks",tid,{...t,urgente:!t.urgente});};
 
@@ -467,31 +460,51 @@ function App(){
   const iniciarComplete=tid=>{setObsT("");setShowObs(tid);};
   const doComplete=async()=>{
     if(!showObs)return;
-    const tid=showObs;
-    const task=tasks.find(t=>String(t.id)===String(tid));
-    await updTask(tid,item=>{
+    const task=tasks.find(t=>String(t.id)===String(showObs));
+    // guardar extendedMs acumulado
+    const ext=extendedTasks[showObs];
+    const extraMs=ext?.active?(ext.activeMs+(ts()-ext.startedAt)):ext?.activeMs||0;
+    await updTask(showObs,item=>{
       const total=item.status==="paused"?item.activeMs:item.activeMs+(ts()-item.startedAt);
-      return{...item,status:"done",completedAt:ts(),activeMs:total,hours:msToH(total),observacion:obsT.trim()||null};
+      return{...item,status:"done",completedAt:ts(),activeMs:total,hours:msToH(total),observacion:obsT.trim()||null,extendedMs:(item.extendedMs||0)+extraMs};
     });
+    if(ext)setExtendedTasks(p=>{const n={...p};delete n[showObs];return n;});
     await startNextQueued(task.assignedTo);
     setShowObs(null);setObsT("");
   };
 
-  const addTask=async d=>{
-    const data=d||nt;if(!data.title||!data.assignedTo)return;
-    const activo=hasActiveTask(data.assignedTo);
-    const status=(!activo||data.urgente)?"inprogress":"queued";
-    if(data.urgente&&activo){const curr=tasks.find(t=>String(t.assignedTo)===String(data.assignedTo)&&t.status==="inprogress");if(curr)await fbSet("tasks",curr.id,{...curr,status:"paused",activeMs:curr.activeMs+(ts()-curr.startedAt),pausedAt:ts(),autopaused:false});}
-    const task=mkTask({title:data.title,assignedTo:data.assignedTo,assignedBy:cur.id,clientId:data.clientId||"",tipoDevolucion:data.tipoDevolucion||"",periodo:data.periodo||"",urgente:!!data.urgente,status,startedAt:status==="inprogress"?ts():null,activeMs:0});
-    await fbSet("tasks",task.id,task);
-    pushN(data.assignedTo,activo&&!data.urgente?"Nueva tarea en cola":`${cur.firstName} te asignó una tarea`,"nueva",data.title);
-    setNt({title:"",assignedTo:"",clientId:"",tipoDevolucion:"",periodo:"",urgente:false});setShowNT(false);
+  const toggleExtended=async(tid)=>{
+    const task=tasks.find(t=>String(t.id)===String(tid));if(!task)return;
+    const ext=extendedTasks[tid]||{active:false,startedAt:null,activeMs:0};
+    if(ext.active){
+      const ms=ext.activeMs+(ts()-ext.startedAt);
+      setExtendedTasks(p=>({...p,[tid]:{active:false,startedAt:null,activeMs:ms}}));
+      await fbSet("tasks",tid,{...task,extendedMs:(task.extendedMs||0)+(ms-ext.activeMs)});
+    }else{
+      setExtendedTasks(p=>({...p,[tid]:{active:true,startedAt:ts(),activeMs:ext.activeMs}}));
+      if(task.status==="paused")await fbSet("tasks",tid,{...task,status:"inprogress",startedAt:ts(),pausedAt:null,autopaused:false});
+    }
+  };
+
+  const liveExtMs=tid=>{const ext=extendedTasks[tid];if(!ext)return 0;return ext.active?ext.activeMs+(ts()-ext.startedAt):ext.activeMs;};
+
+  const addTaskMasiva=async()=>{
+    if(!nt.title||!nt.assignedTo||!nt.clientId||!nt.tipoDevolucion||!nt.periodos?.length)return;
+    for(const periodo of nt.periodos){
+      await new Promise(r=>setTimeout(r,60));
+      const activo=hasActiveTask(nt.assignedTo);
+      const status=(!activo||nt.urgente)?"inprogress":"queued";
+      if(nt.urgente&&activo){const curr=tasks.find(t=>String(t.assignedTo)===String(nt.assignedTo)&&t.status==="inprogress");if(curr)await fbSet("tasks",curr.id,{...curr,status:"paused",activeMs:curr.activeMs+(ts()-curr.startedAt),pausedAt:ts(),autopaused:false});}
+      const task=mkTask({title:nt.title,assignedTo:nt.assignedTo,assignedBy:cur.id,clientId:nt.clientId,tipoDevolucion:nt.tipoDevolucion,periodo,urgente:!!nt.urgente,status,startedAt:status==="inprogress"?ts():null,activeMs:0});
+      await fbSet("tasks",task.id,task);
+    }
+    pushN(nt.assignedTo,`${cur.firstName} te asignó ${nt.periodos.length} tarea${nt.periodos.length>1?"s":""}`,"nueva",nt.title);
+    setNt({title:"",assignedTo:"",clientId:"",tipoDevolucion:"",periodos:[],urgente:false});setShowNT(false);
   };
 
   const addSub=async pid=>{
     if(!nst.title||!nst.assignedTo)return;
     const parent=tasks.find(t=>String(t.id)===String(pid));if(!parent)return;
-    // Sub-tarea como documento independiente en "tasks" con parentId
     const st=mkTask({title:nst.title,assignedTo:nst.assignedTo,assignedBy:cur.id,parentId:pid,parentTitle:parent.title,clientId:parent.clientId,tipoDevolucion:parent.tipoDevolucion,periodo:parent.periodo});
     await fbSet("tasks",st.id,st);
     pushN(nst.assignedTo,`${cur.firstName} te asignó una sub-tarea`,"nueva",nst.title);
@@ -507,6 +520,7 @@ function App(){
   };
 
   const sendRem=task=>{const a=gU(task.assignedTo);if(!a)return;pushN(task.assignedTo,"Recordatorio de tarea pendiente","pendiente",task.title);alert(`✅ Recordatorio enviado a ${a.firstName}`);};
+
   const openNC=()=>{setClf({compania:"",tiposDevolucion:[],periodos:[""]});setEditCl(null);setShowCF(true);};
   const openEC=cl=>{setClf({compania:cl.compania,tiposDevolucion:cl.tiposDevolucion||[],periodos:[...(cl.periodos||[])]});setEditCl(cl);setShowCF(true);};
   const saveCl=async()=>{
@@ -527,32 +541,7 @@ function App(){
   const saveColab=async updated=>{await fbSet("users",updated.id,updated);setUsers(users.map(u=>u.id===updated.id?updated:u));if(cur.id===updated.id)setCur(updated);setEditColab(null);};
   const saveActivity=async()=>{const t=newAct.trim();if(!t||allActivities.includes(t))return;const updated=[...customActivities,t];setCustomActivities(updated);await fbSet("config","activities",{list:updated});setNewAct("");};
   const deleteActivity=async act=>{const updated=customActivities.filter(a=>a!==act);setCustomActivities(updated);await fbSet("config","activities",{list:updated});};
-  // Modo extendido: activo fuera de horario laboral (antes de 9h o después de 17h30)
-  const isExtendedHour=()=>{const t=new Date().getHours()*60+new Date().getMinutes();return t<540||t>=1050;};
-  const[extendedTasks,setExtendedTasks]=useState({}); // {taskId: {active, startedAt, activeMs}}
-
-  const toggleExtended=async(tid)=>{
-    const task=tasks.find(t=>String(t.id)===String(tid));if(!task)return;
-    const ext=extendedTasks[tid]||{active:false,startedAt:null,activeMs:0};
-    if(ext.active){
-      // pausar modo extendido
-      const ms=ext.activeMs+(ts()-ext.startedAt);
-      const updated={...extendedTasks,[tid]:{active:false,startedAt:null,activeMs:ms}};
-      setExtendedTasks(updated);
-      // guardar en la tarea
-      await fbSet("tasks",tid,{...task,extendedMs:(task.extendedMs||0)+ms-(ext.activeMs)});
-    } else {
-      // iniciar modo extendido — también reanudar la tarea si estaba pausada
-      const updExt={...extendedTasks,[tid]:{active:true,startedAt:ts(),activeMs:ext.activeMs}};
-      setExtendedTasks(updExt);
-      if(task.status==="paused"){await fbSet("tasks",tid,{...task,status:"inprogress",startedAt:ts(),pausedAt:null,autopaused:false});}
-    }
-  };
-
-  const liveExtMs=tid=>{
-    const ext=extendedTasks[tid];if(!ext)return 0;
-    return ext.active?ext.activeMs+(ts()-ext.startedAt):ext.activeMs;
-  };
+  const doLogin=()=>{const u=users.find(u=>u.email.toLowerCase()===lEmail.toLowerCase());if(u&&u.password===lPass){setCur(u);setLErr("");}else setLErr("Correo o contraseña incorrectos.");};
 
   if(!fbReady||loading)return(
     <div style={{minHeight:"100vh",background:`linear-gradient(135deg,${P.black},${P.dark})`,display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -586,13 +575,8 @@ function App(){
   );
 
   const nav=[{id:"board",icon:"📋",label:"Tablero"},{id:"clients",icon:"🏢",label:"Clientes"},{id:"colabs",icon:"👥",label:"Colaboradores"},{id:"report",icon:"📊",label:"Reportes"},...(isJ?[{id:"team",icon:"🏠",label:"Equipo"}]:[])];
+  const sortedTasks=()=>[...myTasks()].filter(t=>t.status!=="done").sort((a,b)=>(b.urgente?1:0)-(a.urgente?1:0));
 
-  // Tareas ordenadas: urgentes primero
-  const sortedTasks=()=>[...myTasks()]
-    .filter(t=>t.status!=="done")
-    .sort((a,b)=>(b.urgente?1:0)-(a.urgente?1:0));
-
-  // ── Renderizar tarjeta de tarea/sub-tarea ──────────────────────────────
   const renderTask=task=>{
     const isSub=!!task.parentId;
     const asg=gU(task.assignedTo),asr=gU(task.assignedBy),cl=gC(task.clientId);
@@ -600,14 +584,16 @@ function App(){
     const isAssignee=String(task.assignedTo)===String(cur.id);
     const canSub=!isSub&&isAssignee&&CAN_ASSIGN_TO[role]?.length>0;
     const borderCol=task.urgente?P.urgent:isSub?"#0369A1":isP?P.goldD:isR?P.gold:isQ?"#7C3AED33":P.border;
+    const extActive=extendedTasks[task.id]?.active;
 
-    return <div key={task.id} style={{background:P.white,borderRadius:12,border:`1.5px solid ${borderCol}`,padding:16,marginBottom:12,boxShadow:isR?`0 2px 12px ${isSub?"#0369A133":P.gold+"33"}`:"0 1px 4px #00000011",opacity:isQ?0.85:1}}>
+    return <div key={task.id} style={{background:P.white,borderRadius:12,border:`1.5px solid ${borderCol}`,padding:16,marginBottom:12,boxShadow:extActive?`0 2px 16px ${P.ext}44`:isR?`0 2px 12px ${P.gold}33`:"0 1px 4px #00000011",opacity:isQ?0.85:1}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
         <div style={{flex:1,minWidth:180}}>
           <div style={{display:"flex",alignItems:"center",marginBottom:6,gap:6,flexWrap:"wrap"}}>
             {isSub&&<span style={{background:"#E0F2FE",color:"#0369A1",fontSize:10,padding:"2px 7px",borderRadius:99,fontWeight:800}}>↳ SUB-TAREA</span>}
             {task.urgente&&<span style={{background:P.urgent,color:P.white,fontSize:10,padding:"1px 6px",borderRadius:99,fontWeight:800}}>⚡ URGENTE</span>}
             {isQ&&<span style={{background:"#EDE9FE",color:P.urgent,fontSize:10,padding:"1px 6px",borderRadius:99,fontWeight:800}}>⏳ EN COLA</span>}
+            {extActive&&<span style={{background:"#F5F3FF",color:P.ext,fontSize:10,padding:"1px 6px",borderRadius:99,fontWeight:800}}>🌙 MODO EXTENDIDO</span>}
             <span style={{fontWeight:700,color:P.black,fontSize:14}}>{task.title}</span>
             {!isSub&&<button onClick={()=>setShowDel(task.id)} style={{marginLeft:"auto",padding:"3px 10px",background:"#FEF2F2",color:P.danger,border:"1px solid #FECACA",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:12}}>🗑️</button>}
           </div>
@@ -626,9 +612,10 @@ function App(){
           {task.observacion&&isD&&<div style={{marginTop:6,fontSize:12,color:P.gray,background:P.lightG,borderRadius:6,padding:"5px 8px",border:`1px solid ${P.border}`}}>💬 {task.observacion}</div>}
         </div>
         <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
-          {!isQ&&<div style={{background:isD?"#F9F5E7":isP?"#FFF7ED":P.lightG,border:`1.5px solid ${isD?P.gold:isP?P.goldD:P.gold}`,borderRadius:8,padding:"6px 12px",textAlign:"center",minWidth:116}}>
-            <div style={{fontSize:10,fontWeight:700,color:P.goldD}}>{isD?"✅ TOTAL":isP?"⏸ PAUSADO":"🔴 ACTIVO"}</div>
+          {!isQ&&<div style={{background:extActive?"#F5F3FF":isD?"#F9F5E7":isP?"#FFF7ED":P.lightG,border:`1.5px solid ${extActive?P.ext:isD?P.gold:isP?P.goldD:P.gold}`,borderRadius:8,padding:"6px 12px",textAlign:"center",minWidth:116}}>
+            <div style={{fontSize:10,fontWeight:700,color:extActive?P.ext:P.goldD}}>{extActive?"🌙 EXTENDIDO":isD?"✅ TOTAL":isP?"⏸ PAUSADO":"🔴 ACTIVO"}</div>
             <div style={{fontSize:14,fontWeight:800,color:P.black,fontVariantNumeric:"tabular-nums"}}>{fmtT(act)}</div>
+            {extActive&&<div style={{fontSize:10,color:P.ext}}>+{fmtT(liveExtMs(task.id))} ext.</div>}
             {isD&&task.hours&&<div style={{fontSize:10,color:P.gray}}>{task.hours}h</div>}
           </div>}
           {isQ&&<div style={{background:"#EDE9FE",border:`1.5px solid ${P.urgent}`,borderRadius:8,padding:"8px 12px",textAlign:"center",minWidth:116}}>
@@ -636,16 +623,11 @@ function App(){
             <div style={{fontSize:11,color:P.gray,marginTop:2}}>Iniciará al completar<br/>la tarea actual</div>
           </div>}
           <div style={{display:"flex",gap:5,flexWrap:"wrap",justifyContent:"flex-end"}}>
-            {/* Modo extendido — visible fuera de horario o siempre para el asignado */}
-            {!isD&&!isQ&&isAssignee&&(
-              <button onClick={()=>toggleExtended(task.id)}
-                title="Modo extendido: trabajar fuera de horario"
-                style={{padding:"5px 9px",background:extendedTasks[task.id]?.active?"#7C3AED":"transparent",color:extendedTasks[task.id]?.active?P.white:"#7C3AED",border:`1.5px solid #7C3AED`,borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:800}}>
-                🌙{extendedTasks[task.id]?.active?` ${fmtT(liveExtMs(task.id))}`:""}
-              </button>
-            )}
-            {!isSub&&!isD&&isR&&<button onClick={()=>activarUrgente(task.id)} style={{padding:"5px 9px",background:P.gold,color:P.black,border:`1px solid ${P.goldD}`,borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:800}} title="Activar urgente en cola">⚡</button>}
+            {!isSub&&!isD&&!isR&&<button onClick={()=>toggleUrgente(task.id)} style={{padding:"5px 9px",background:task.urgente?P.urgent:"transparent",color:task.urgente?P.white:P.urgent,border:`1px solid ${P.urgent}`,borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:700}}>⚡</button>}
+            {!isSub&&!isD&&isR&&<button onClick={()=>activarUrgente(task.id)} style={{padding:"5px 9px",background:P.gold,color:P.black,border:`1px solid ${P.goldD}`,borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:800}}>⚡</button>}
             {!isSub&&!isD&&!isQ&&<button onClick={()=>sendRem(task)} style={{padding:"5px 9px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:7,cursor:"pointer",fontSize:12}}>🔔</button>}
+            {/* Modo extendido */}
+            {!isD&&!isQ&&isAssignee&&<button onClick={()=>toggleExtended(task.id)} style={{padding:"5px 9px",background:extActive?P.ext:"transparent",color:extActive?P.white:P.ext,border:`1.5px solid ${P.ext}`,borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:800}}>🌙</button>}
             {!isD&&!isQ&&isR&&isAssignee&&<button onClick={()=>{setEvNombre("");setShowEv({tid:task.id});}} style={{padding:"6px 10px",background:P.danger,color:P.white,border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:11}}>📌 Evento</button>}
             {!isD&&!isQ&&isP&&isAssignee&&<button onClick={()=>reanudar(task.id)} style={{padding:"6px 10px",background:P.success,color:P.white,border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:11}}>▶ Reanudar</button>}
             {!isD&&!isQ&&isAssignee&&<button onClick={()=>iniciarComplete(task.id)} style={{padding:"6px 12px",background:P.gold,color:P.black,border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:12}}>✅ Completar</button>}
@@ -698,26 +680,19 @@ function App(){
       </div>}
 
       <div style={{padding:20,maxWidth:1200,margin:"0 auto"}}>
-
         {view==="board"&&(()=>{
           const allT=sortedTasks();
           const myProjs=myProjects();
-
-          // Para splitView: separar mis tareas de las que asigné
-          const misTareas=isSplitView
-            ?allT.filter(t=>String(t.assignedTo)===String(cur.id))
-            :allT;
-          const tareasAsignadas=isSplitView
-            ?allT.filter(t=>String(t.assignedBy)===String(cur.id)&&String(t.assignedTo)!==String(cur.id))
-            :[];
+          const misTareas=isSplitView?allT.filter(t=>String(t.assignedTo)===String(cur.id)):allT;
+          const tareasAsignadas=isSplitView?allT.filter(t=>String(t.assignedBy)===String(cur.id)&&String(t.assignedTo)!==String(cur.id)):[];
           const misProyectos=(isSr||isSs)?myProjs.filter(p=>String(p.assignedTo)===String(cur.id)):[];
-          const proyAsignados=canAssignProjects?myProjs.filter(p=>String(p.assignedBy)===String(cur.id)):[];
+          const proyAsignados=canAssignProjects?myProjs.filter(p=>String(p.assignedBy)===String(cur.id)&&String(p.assignedTo)!==String(cur.id)):[];
 
           return <>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,flexWrap:"wrap",gap:8}}>
               <h2 style={{margin:0,color:P.black,fontSize:19,fontWeight:800}}>📋 Tablero de Tareas</h2>
               <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                {(isC||isSr)&&<button onClick={()=>setShowActMgr(true)} style={{padding:"9px 14px",background:"#F0F9FF",color:"#0369A1",border:`1px solid ${P.ai}`,borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>⚙️ Actividades</button>}
+                {(isC||isSr||isJ)&&<button onClick={()=>setShowActMgr(true)} style={{padding:"9px 14px",background:"#F0F9FF",color:"#0369A1",border:`1px solid ${P.ai}`,borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>⚙️ Actividades</button>}
                 {canAssignProjects&&<button onClick={()=>setShowNProy(true)} style={{padding:"9px 16px",background:P.proj,color:P.white,border:"none",borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>🗂 Nuevo Proyecto</button>}
                 {canAssign&&<button onClick={()=>setShowNT(true)} style={{padding:"9px 20px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>+ Nueva Tarea</button>}
               </div>
@@ -764,19 +739,19 @@ function App(){
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:8}}>
             <h2 style={{margin:0,color:P.black,fontSize:19,fontWeight:800}}>🏢 Clientes</h2>
             <div style={{display:"flex",gap:8}}>
-              {canClients&&<button onClick={()=>{
+              <button onClick={()=>{
                 const hdrs=["Compañía","Tipos de Devolución","Periodos"];
                 const rows=[hdrs,...clients.map(c=>[c.compania,(c.tiposDevolucion||[]).join(" | "),(c.periodos||[]).join(" | ")])];
                 const csv=rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(",")).join("\n");
                 const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
                 const url=URL.createObjectURL(blob),a=document.createElement("a");
                 a.href=url;a.download=`clientes_census_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url);
-              }} style={{padding:"8px 16px",background:P.gold,color:P.black,border:"none",borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>⬇️ Exportar</button>}
+              }} style={{padding:"8px 16px",background:P.gold,color:P.black,border:"none",borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>⬇️ Exportar</button>
               {canClients&&<button onClick={openNC} style={{padding:"8px 18px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>+ Nuevo Cliente</button>}
             </div>
           </div>
-          {!canClients&&!canAddPeriodos&&<div style={{background:"#FFF8E7",border:`1px solid ${P.border}`,borderRadius:10,padding:12,color:P.goldD,fontSize:13,marginBottom:14}}>Solo Jefe y Coordinador pueden gestionar clientes.</div>}
-          {!canClients&&canAddPeriodos&&<div style={{background:"#F0F9FF",border:`1px solid ${P.ai}`,borderRadius:10,padding:12,color:"#0369A1",fontSize:13,marginBottom:14}}>📅 Puedes agregar periodos a los clientes existentes.</div>}
+          {!canClients&&!canAddPeriodos&&<div style={{background:"#FFF8E7",border:`1px solid ${P.border}`,borderRadius:10,padding:12,color:P.goldD,fontSize:13,marginBottom:14}}>Solo Jefe, Coordinador y Senior pueden gestionar clientes.</div>}
+          {canAddPeriodos&&<div style={{background:"#F0F9FF",border:`1px solid ${P.ai}`,borderRadius:10,padding:12,color:"#0369A1",fontSize:13,marginBottom:14}}>📅 Puedes agregar periodos a los clientes existentes.</div>}
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}}>
             {clients.map(cl=><div key={cl.id} style={{background:P.white,borderRadius:12,border:`1.5px solid ${P.border}`,padding:18}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
@@ -787,7 +762,7 @@ function App(){
                 <div style={{display:"flex",gap:4}}>
                   {canClients&&<><button onClick={()=>openEC(cl)} style={{padding:"4px 8px",background:P.lightG,border:`1px solid ${P.border}`,borderRadius:6,cursor:"pointer"}}>✏️</button>
                   <button onClick={()=>fbDel("clients",cl.id)} style={{padding:"4px 8px",background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:6,cursor:"pointer"}}>🗑️</button></>}
-                  {!canClients&&canAddPeriodos&&<button onClick={()=>openEC(cl)} style={{padding:"4px 10px",background:"#F0F9FF",border:`1px solid ${P.ai}`,borderRadius:6,cursor:"pointer",fontSize:11,fontWeight:700,color:"#0369A1"}}>📅 +Periodo</button>}
+                  {canAddPeriodos&&<button onClick={()=>openEC(cl)} style={{padding:"4px 10px",background:"#F0F9FF",border:`1px solid ${P.ai}`,borderRadius:6,cursor:"pointer",fontSize:11,fontWeight:700,color:"#0369A1"}}>📅 +Periodo</button>}
                 </div>
               </div>
               <div style={{fontSize:11,fontWeight:700,color:P.goldD,marginBottom:6}}>TIPOS DE DEVOLUCIÓN</div>
@@ -878,15 +853,22 @@ function App(){
       </Modal>}
 
       {showObs&&(()=>{
-        const item=tasks.find(t=>String(t.id)===String(showObs));
-        const ms=item?liveMs(item):0;
+        const item=tasks.find(t=>String(t.id)===String(showObs));const ms=item?liveMs(item):0;
+        const extMs=liveExtMs(showObs);
         return <Modal title="✅ Completar Tarea" onClose={()=>setShowObs(null)}>
           <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Observación <span style={{fontWeight:400,color:P.gray}}>(opcional)</span></label>
           <textarea value={obsT} onChange={e=>setObsT(e.target.value)} placeholder="Ej: Se encontraron diferencias..." style={{...iSt,height:80,resize:"vertical"}}/>
-          <div style={{background:P.lightG,border:`1.5px solid ${P.gold}`,borderRadius:10,padding:12,marginBottom:14,textAlign:"center"}}>
-            <div style={{fontSize:11,fontWeight:700,color:P.goldD}}>TIEMPO ACTIVO</div>
-            <div style={{fontSize:22,fontWeight:800,color:P.black}}>{fmtT(ms)}</div>
-            <div style={{fontSize:12,color:P.gray}}>≈ {msToH(ms)}h se registrarán</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+            <div style={{background:P.lightG,border:`1.5px solid ${P.gold}`,borderRadius:10,padding:12,textAlign:"center"}}>
+              <div style={{fontSize:11,fontWeight:700,color:P.goldD}}>TIEMPO NORMAL</div>
+              <div style={{fontSize:18,fontWeight:800,color:P.black}}>{fmtT(ms)}</div>
+              <div style={{fontSize:11,color:P.gray}}>≈ {msToH(ms)}h</div>
+            </div>
+            {extMs>0&&<div style={{background:"#F5F3FF",border:`1.5px solid ${P.ext}`,borderRadius:10,padding:12,textAlign:"center"}}>
+              <div style={{fontSize:11,fontWeight:700,color:P.ext}}>🌙 TIEMPO EXTENDIDO</div>
+              <div style={{fontSize:18,fontWeight:800,color:P.ext}}>{fmtT(extMs)}</div>
+              <div style={{fontSize:11,color:P.gray}}>≈ {msToH(extMs)}h</div>
+            </div>}
           </div>
           <BtnRow onCancel={()=>setShowObs(null)} onConfirm={doComplete} label="✅ Confirmar" color={P.gold}/>
         </Modal>;
@@ -898,7 +880,7 @@ function App(){
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Confirmar</label><input value={pf.confirm} onChange={e=>setPf({...pf,confirm:e.target.value})} type="password" style={iSt}/>
         {pErr&&<div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:8,padding:"8px 12px",color:P.danger,fontSize:13,marginBottom:10}}>⚠️ {pErr}</div>}
         {pOk&&<div style={{background:"#F0FDF4",border:"1px solid #BBF7D0",borderRadius:8,padding:"8px 12px",color:P.success,fontSize:13,marginBottom:10}}>✅ ¡Actualizada!</div>}
-        <BtnRow onCancel={()=>{setShowCP(false);setPErr("");setPf({current:"",nuevo:"",confirm:""});}} onConfirm={savePass} label="Guardar" color={P.black}/>
+        <BtnRow onCancel={()=>{setShowCP(false);setPErr("");setPf({current:"",nuevo:"",confirm:""}); }} onConfirm={savePass} label="Guardar" color={P.black}/>
       </Modal>}
 
       {showCF&&<Modal title={editCl?(canClients?"✏️ Editar Cliente":"📅 Agregar Periodo"):"🏢 Nuevo Cliente"} onClose={()=>setShowCF(false)}>
@@ -911,7 +893,7 @@ function App(){
           </label>)}
         </div>
         {clf.tiposDevolucion.length===0&&<p style={{fontSize:11,color:P.danger,margin:"-8px 0 10px"}}>* Selecciona al menos uno</p>}</>}
-        {!canClients&&canAddPeriodos&&editCl&&<div style={{background:"#F0F9FF",border:`1px solid ${P.ai}`,borderRadius:8,padding:"8px 12px",marginBottom:14,fontSize:12,color:"#0369A1"}}>📋 <strong>{clf.compania}</strong></div>}
+        {canAddPeriodos&&editCl&&<div style={{background:"#F0F9FF",border:`1px solid ${P.ai}`,borderRadius:8,padding:"8px 12px",marginBottom:14,fontSize:12,color:"#0369A1"}}>📋 <strong>{clf.compania}</strong></div>}
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Periodos</label>
         {clf.periodos.map((p,i)=><div key={i} style={{display:"flex",gap:6,marginTop:4,marginBottom:6}}>
           <input value={p} onChange={e=>{const ps=[...clf.periodos];ps[i]=e.target.value;setClf({...clf,periodos:ps});}} placeholder="Ej: Enero 2025" style={{...iSt,marginTop:0,marginBottom:0,flex:1}}/>
@@ -945,7 +927,7 @@ function App(){
             {(clients.find(c=>String(c.id)===String(nt.clientId))?.tiposDevolucion||[]).map(td=><option key={td} value={td}>{td}</option>)}
           </select>
           {nt.tipoDevolucion&&<>
-            <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Periodos <span style={{fontWeight:400,color:P.goldD,fontSize:11}}>(selecciona uno o varios — se crea una tarea por cada uno)</span></label>
+            <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Periodos <span style={{fontWeight:400,color:P.goldD,fontSize:11}}>(selecciona uno o varios)</span></label>
             <div style={{display:"flex",flexDirection:"column",gap:5,marginTop:6,marginBottom:12,maxHeight:160,overflowY:"auto",padding:8,border:`1px solid ${P.border}`,borderRadius:7,background:P.lightG}}>
               {(clients.find(c=>String(c.id)===String(nt.clientId))?.periodos||[]).map(p=><label key={p} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,color:P.dark,padding:"4px 6px",borderRadius:6,background:nt.periodos.includes(p)?P.white:"transparent",border:nt.periodos.includes(p)?`1px solid ${P.border}`:"1px solid transparent"}}>
                 <input type="checkbox" checked={nt.periodos.includes(p)} onChange={()=>setNt({...nt,periodos:nt.periodos.includes(p)?nt.periodos.filter(x=>x!==p):[...nt.periodos,p]})} style={{accentColor:P.goldD,width:14,height:14}}/>
@@ -981,12 +963,12 @@ function App(){
       </Modal>}
 
       {showNProy&&<Modal title="🗂 Nuevo Proyecto" onClose={()=>setShowNProy(false)}>
-        <div style={{background:"#F0FDFA",border:`1px solid #99F6E4`,borderRadius:8,padding:"8px 12px",marginBottom:14,fontSize:12,color:P.proj}}>Se asigna a Senior o Semi Senior y se gestiona por sesiones de trabajo.</div>
+        <div style={{background:"#F0FDFA",border:`1px solid #99F6E4`,borderRadius:8,padding:"8px 12px",marginBottom:14,fontSize:12,color:P.proj}}>Se gestiona por sesiones de trabajo con cronómetro libre.</div>
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Nombre del proyecto</label>
         <input value={nproy.nombre} onChange={e=>setNproy({...nproy,nombre:e.target.value})} placeholder="Ej: Auditoría Q1 Empresa ABC" style={iSt}/>
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Asignar a</label>
         <select value={nproy.assignedTo} onChange={e=>setNproy({...nproy,assignedTo:e.target.value})} style={iSt}>
-          <option value="">Selecciona Senior / Semi Senior...</option>
+          <option value="">Selecciona colaborador...</option>
           {projAssignTo.map(u=><option key={u.id} value={u.id}>{u.avatar} {u.firstName} {u.lastName} — {rl(u.role)}</option>)}
         </select>
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Cliente</label>
