@@ -1,3 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TimeTrack Pro — Census Consultores</title>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:system-ui,-apple-system,sans-serif;background:#F5F5F0;}
+    input,select,button,textarea{font-family:inherit;}
+    ::-webkit-scrollbar{width:6px;}
+    ::-webkit-scrollbar-track{background:#F5F5F0;}
+    ::-webkit-scrollbar-thumb{background:#C9A84C;border-radius:99px;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+</head>
+<body><div id="root"></div>
+<script type="module">
+  import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import{getFirestore,collection,onSnapshot,doc,setDoc,deleteDoc}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  const cfg={apiKey:"AIzaSyAxFiWMwOlF-Sh5AWjdSrUgXxyxyM27hvQ",authDomain:"timetrack-census.firebaseapp.com",projectId:"timetrack-census",storageBucket:"timetrack-census.firebasestorage.app",messagingSenderId:"43634290060",appId:"1:43634290060:web:36c8013016d589a6af3aa9"};
+  const app=initializeApp(cfg);const db=getFirestore(app);
+  window._db=db;window._col=collection;window._snap=onSnapshot;window._doc=doc;window._set=setDoc;window._del=deleteDoc;window._fbReady=true;
+  window.dispatchEvent(new Event("fb-ready"));
+</script>
+<script type="text/babel">
+const{useState,useEffect}=React;
 function ProyectoCard({proj,cur,users,clients,tasks,onDelete,onEdit}){
   const[expanded,setExpanded]=useState(false);
   const[showIniciar,setShowIniciar]=useState(false);
@@ -15,7 +46,7 @@ function ProyectoCard({proj,cur,users,clients,tasks,onDelete,onEdit}){
   const isOwner=String(proj.assignedTo)===String(cur.id);
   const isCreator=String(proj.assignedBy)===String(cur.id);
   const isCompletado=proj.status==="completado";
-  const periodos=proj.periodos||[];
+  const periodos=proj.periodos||(proj.periodo?[proj.periodo]:[]);
   // sub-tareas de este proyecto
   const projSubs=tasks.filter(t=>String(t.parentId)===String(proj.id));
 
