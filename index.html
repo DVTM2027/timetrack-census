@@ -1,4 +1,31 @@
-<!DOCTYPE html>
+function ProyectoCard({proj,cur,users,clients,tasks,onDelete,onEdit}){
+  const[expanded,setExpanded]=useState(false);
+  const[showIniciar,setShowIniciar]=useState(false);
+  const[showCerrar,setShowCerrar]=useState(false);
+  const[showNSub,setShowNSub]=useState(false);
+  const[descSesion,setDescSesion]=useState("");
+  const[obsSesion,setObsSesion]=useState("");
+  const[nst,setNst]=useState({title:"",assignedTo:"",periodo:""});
+  const cl=clients.find(c=>String(c.id)===String(proj.clientId));
+  const asignador=users.find(u=>String(u.id)===String(proj.assignedBy));
+  const sesiones=proj.sesiones||[];
+  const sesionActiva=sesiones.find(s=>s.status==="activa");
+  const totalMs=sesiones.reduce((acc,s)=>acc+(s.status==="activa"?s.activeMs+(ts()-s.startedAt):s.activeMs),0);
+  const subTo=users.filter(u=>u.role==="junior");
+  const isOwner=String(proj.assignedTo)===String(cur.id);
+  const isCreator=String(proj.assignedBy)===String(cur.id);
+  const isCompletado=proj.status==="completado";
+  const periodos=proj.periodos||[];
+  // sub-tareas de este proyecto
+  const projSubs=tasks.filter(t=>String(t.parentId)===String(proj.id));
+
+  const iniciarSesion=async()=>{
+    if(!descSesion.trim())return;
+    const nueva={id:"s"+ts(),desc:descSesion.trim(),startedAt:ts(),activeMs:0,status:"activa",fecha:ts()};
+    await fbSet("projects",proj.id,{...proj,sesiones:[...sesiones,nueva],status:"activo"});
+    setDescSesion("");setShowIniciar(false);
+  };
+  const cerrarSesion=<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
@@ -370,6 +397,7 @@ function App(){
   const[showActMgr,setShowActMgr]=useState(false);const[newAct,setNewAct]=useState("");
   const[showNProy,setShowNProy]=useState(false);
   const[nproy,setNproy]=useState({nombre:"",assignedTo:"",clientId:"",tipoDevolucion:"",periodos:[]});
+  const[editProy,setEditProy]=useState(null); // proyecto a editar
   const[nt,setNt]=useState({title:"",assignedTo:"",clientId:"",tipoDevolucion:"",periodos:[],urgente:false});
   const[nst,setNst]=useState({title:"",assignedTo:""});
   const[clf,setClf]=useState({compania:"",tiposDevolucion:[],periodos:[""]});
@@ -513,13 +541,16 @@ function App(){
 
   const addProyecto=async()=>{
     if(!nproy.nombre.trim()||!nproy.assignedTo||!nproy.clientId||!nproy.periodos?.length)return;
-    for(const periodo of nproy.periodos){
-      await new Promise(r=>setTimeout(r,60));
-      const proj={id:"p"+ts(),nombre:nproy.nombre.trim(),assignedTo:nproy.assignedTo,assignedBy:cur.id,clientId:nproy.clientId,tipoDevolucion:nproy.tipoDevolucion||"",periodo,sesiones:[],status:"pendiente",creadoAt:ts()};
-      await fbSet("projects",proj.id,proj);
-    }
-    pushN(nproy.assignedTo,`${cur.firstName} te asignó ${nproy.periodos.length} proyecto${nproy.periodos.length>1?"s":""}: ${nproy.nombre}`,"nueva",nproy.nombre);
+    const proj={id:"p"+ts(),nombre:nproy.nombre.trim(),assignedTo:nproy.assignedTo,assignedBy:cur.id,clientId:nproy.clientId,tipoDevolucion:nproy.tipoDevolucion||"",periodos:nproy.periodos,sesiones:[],status:"pendiente",creadoAt:ts()};
+    await fbSet("projects",proj.id,proj);
+    pushN(nproy.assignedTo,`${cur.firstName} te asignó el proyecto: ${proj.nombre}`,"nueva",proj.nombre);
     setNproy({nombre:"",assignedTo:"",clientId:"",tipoDevolucion:"",periodos:[]});setShowNProy(false);
+  };
+
+  const saveEditProy=async()=>{
+    if(!editProy)return;
+    await fbSet("projects",editProy.id,editProy);
+    setEditProy(null);
   };
 
   const sendRem=task=>{const a=gU(task.assignedTo);if(!a)return;pushN(task.assignedTo,"Recordatorio de tarea pendiente","pendiente",task.title);alert(`✅ Recordatorio enviado a ${a.firstName}`);};
@@ -709,7 +740,7 @@ function App(){
                     <span style={{fontWeight:800,color:P.black,fontSize:15}}>Mis tareas</span>
                     <span style={{background:P.gold,color:P.black,borderRadius:99,fontWeight:800,fontSize:11,padding:"1px 8px",marginLeft:"auto"}}>{misTareas.length+misProyectos.length}</span>
                   </div>
-                  {misProyectos.map(p=><ProyectoCard key={p.id} proj={p} cur={cur} users={users} clients={clients} tasks={tasks} onDelete={id=>fbDel("projects",id)}/>)}
+                  {misProyectos.map(p=><ProyectoCard key={p.id} proj={p} cur={cur} users={users} clients={clients} tasks={tasks} onDelete={id=>fbDel("projects",id)} onEdit={p=>setEditProy(p)}/>)}
                   {misTareas.length===0&&misProyectos.length===0&&<div style={{textAlign:"center",padding:40,color:P.gray,fontSize:13,background:P.white,borderRadius:10,border:`1px dashed ${P.border}`}}>Sin asignaciones pendientes</div>}
                   {misTareas.map(renderTask)}
                 </div>
@@ -719,7 +750,7 @@ function App(){
                     <span style={{fontWeight:800,color:P.black,fontSize:15}}>Tareas asignadas</span>
                     <span style={{background:P.proj,color:P.white,borderRadius:99,fontWeight:800,fontSize:11,padding:"1px 8px",marginLeft:"auto"}}>{tareasAsignadas.length+proyAsignados.length}</span>
                   </div>
-                  {proyAsignados.map(p=><ProyectoCard key={p.id} proj={p} cur={cur} users={users} clients={clients} tasks={tasks} onDelete={id=>fbDel("projects",id)}/>)}
+                  {proyAsignados.map(p=><ProyectoCard key={p.id} proj={p} cur={cur} users={users} clients={clients} tasks={tasks} onDelete={id=>fbDel("projects",id)} onEdit={p=>setEditProy(p)}/>)}
                   {tareasAsignadas.length===0&&proyAsignados.length===0&&<div style={{textAlign:"center",padding:40,color:P.gray,fontSize:13,background:P.white,borderRadius:10,border:`1px dashed ${P.border}`}}>No has asignado tareas aún</div>}
                   {tareasAsignadas.map(renderTask)}
                 </div>
@@ -728,7 +759,7 @@ function App(){
               <>
                 {(isJ||isC)&&myProjs.length>0&&<>
                   <div style={{fontSize:13,fontWeight:700,color:P.proj,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>🗂 Proyectos <span style={{background:"#CCFBF1",color:P.proj,borderRadius:99,fontSize:11,padding:"1px 8px",fontWeight:800}}>{myProjs.length}</span></div>
-                  {myProjs.map(p=><ProyectoCard key={p.id} proj={p} cur={cur} users={users} clients={clients} tasks={tasks} onDelete={id=>fbDel("projects",id)}/>)}
+                  {myProjs.map(p=><ProyectoCard key={p.id} proj={p} cur={cur} users={users} clients={clients} tasks={tasks} onDelete={id=>fbDel("projects",id)} onEdit={p=>setEditProy(p)}/>)}
                   {allT.length>0&&<div style={{fontSize:13,fontWeight:700,color:P.goldD,margin:"16px 0 10px"}}>📋 Tareas</div>}
                 </>}
                 {allT.length===0&&myProjs.length===0&&<div style={{textAlign:"center",padding:60,color:P.gray}}>No hay tareas ni proyectos aún.</div>}
