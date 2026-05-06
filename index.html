@@ -369,7 +369,7 @@ function App(){
   const[showNoUrgente,setShowNoUrgente]=useState(false);
   const[showActMgr,setShowActMgr]=useState(false);const[newAct,setNewAct]=useState("");
   const[showNProy,setShowNProy]=useState(false);
-  const[nproy,setNproy]=useState({nombre:"",assignedTo:"",clientId:"",tipoDevolucion:"",periodo:""});
+  const[nproy,setNproy]=useState({nombre:"",assignedTo:"",clientId:"",tipoDevolucion:"",periodos:[]});
   const[nt,setNt]=useState({title:"",assignedTo:"",clientId:"",tipoDevolucion:"",periodos:[],urgente:false});
   const[nst,setNst]=useState({title:"",assignedTo:""});
   const[clf,setClf]=useState({compania:"",tiposDevolucion:[],periodos:[""]});
@@ -512,11 +512,14 @@ function App(){
   };
 
   const addProyecto=async()=>{
-    if(!nproy.nombre.trim()||!nproy.assignedTo||!nproy.clientId)return;
-    const proj={id:"p"+ts(),nombre:nproy.nombre.trim(),assignedTo:nproy.assignedTo,assignedBy:cur.id,clientId:nproy.clientId,tipoDevolucion:nproy.tipoDevolucion||"",periodo:nproy.periodo||"",sesiones:[],status:"pendiente",creadoAt:ts()};
-    await fbSet("projects",proj.id,proj);
-    pushN(nproy.assignedTo,`${cur.firstName} te asignó el proyecto: ${proj.nombre}`,"nueva",proj.nombre);
-    setNproy({nombre:"",assignedTo:"",clientId:"",tipoDevolucion:"",periodo:""});setShowNProy(false);
+    if(!nproy.nombre.trim()||!nproy.assignedTo||!nproy.clientId||!nproy.periodos?.length)return;
+    for(const periodo of nproy.periodos){
+      await new Promise(r=>setTimeout(r,60));
+      const proj={id:"p"+ts(),nombre:nproy.nombre.trim(),assignedTo:nproy.assignedTo,assignedBy:cur.id,clientId:nproy.clientId,tipoDevolucion:nproy.tipoDevolucion||"",periodo,sesiones:[],status:"pendiente",creadoAt:ts()};
+      await fbSet("projects",proj.id,proj);
+    }
+    pushN(nproy.assignedTo,`${cur.firstName} te asignó ${nproy.periodos.length} proyecto${nproy.periodos.length>1?"s":""}: ${nproy.nombre}`,"nueva",nproy.nombre);
+    setNproy({nombre:"",assignedTo:"",clientId:"",tipoDevolucion:"",periodos:[]});setShowNProy(false);
   };
 
   const sendRem=task=>{const a=gU(task.assignedTo);if(!a)return;pushN(task.assignedTo,"Recordatorio de tarea pendiente","pendiente",task.title);alert(`✅ Recordatorio enviado a ${a.firstName}`);};
@@ -972,23 +975,30 @@ function App(){
           {projAssignTo.map(u=><option key={u.id} value={u.id}>{u.avatar} {u.firstName} {u.lastName} — {rl(u.role)}</option>)}
         </select>
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Cliente</label>
-        <select value={nproy.clientId} onChange={e=>setNproy({...nproy,clientId:e.target.value,tipoDevolucion:"",periodo:""})} style={iSt}>
+        <select value={nproy.clientId} onChange={e=>setNproy({...nproy,clientId:e.target.value,tipoDevolucion:"",periodos:[]})} style={iSt}>
           <option value="">Selecciona cliente...</option>
           {clients.map(c=><option key={c.id} value={c.id}>{c.compania}</option>)}
         </select>
         {nproy.clientId&&<>
           <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Tipo de Devolución</label>
-          <select value={nproy.tipoDevolucion} onChange={e=>setNproy({...nproy,tipoDevolucion:e.target.value})} style={iSt}>
+          <select value={nproy.tipoDevolucion} onChange={e=>setNproy({...nproy,tipoDevolucion:e.target.value,periodos:[]})} style={iSt}>
             <option value="">Selecciona tipo...</option>
             {(clients.find(c=>String(c.id)===String(nproy.clientId))?.tiposDevolucion||[]).map(td=><option key={td} value={td}>{td}</option>)}
           </select>
-          <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Periodo</label>
-          <select value={nproy.periodo} onChange={e=>setNproy({...nproy,periodo:e.target.value})} style={iSt}>
-            <option value="">Selecciona periodo...</option>
-            {(clients.find(c=>String(c.id)===String(nproy.clientId))?.periodos||[]).map(p=><option key={p} value={p}>{p}</option>)}
-          </select>
+          {nproy.tipoDevolucion&&<>
+            <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Periodos <span style={{fontWeight:400,color:P.goldD,fontSize:11}}>(selecciona uno o varios — se crea un proyecto por cada uno)</span></label>
+            <div style={{display:"flex",flexDirection:"column",gap:5,marginTop:6,marginBottom:12,maxHeight:160,overflowY:"auto",padding:8,border:`1px solid ${P.border}`,borderRadius:7,background:P.lightG}}>
+              {(clients.find(c=>String(c.id)===String(nproy.clientId))?.periodos||[]).map(p=><label key={p} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,color:P.dark,padding:"4px 6px",borderRadius:6,background:nproy.periodos.includes(p)?P.white:"transparent",border:nproy.periodos.includes(p)?`1px solid ${P.border}`:"1px solid transparent"}}>
+                <input type="checkbox" checked={nproy.periodos.includes(p)} onChange={()=>setNproy({...nproy,periodos:nproy.periodos.includes(p)?nproy.periodos.filter(x=>x!==p):[...nproy.periodos,p]})} style={{accentColor:P.goldD,width:14,height:14}}/>
+                📅 {p}
+              </label>)}
+            </div>
+            {nproy.periodos.length>0&&<div style={{background:"#F0FDFA",border:`1px solid #99F6E4`,borderRadius:7,padding:"7px 10px",marginBottom:10,fontSize:12,color:P.proj}}>
+              🗂 Se crearán <strong>{nproy.periodos.length} proyecto{nproy.periodos.length>1?"s":""}</strong>: {nproy.periodos.join(", ")}
+            </div>}
+          </>}
         </>}
-        <BtnRow onCancel={()=>setShowNProy(false)} onConfirm={addProyecto} label="🗂 Crear proyecto" color={P.proj} disabled={!nproy.nombre.trim()||!nproy.assignedTo||!nproy.clientId}/>
+        <BtnRow onCancel={()=>setShowNProy(false)} onConfirm={addProyecto} label={`Crear${nproy.periodos.length>1?` ${nproy.periodos.length} proyectos`:" proyecto"}`} color={P.proj} disabled={!nproy.nombre.trim()||!nproy.assignedTo||!nproy.clientId||nproy.periodos.length===0}/>
       </Modal>}
 
       {showAv&&<Modal title="🎨 Elige tu Avatar" onClose={()=>setShowAv(false)}>
