@@ -29,64 +29,6 @@
 </script>
 <script type="text/babel">
 const{useState,useEffect}=React;
-function ProyectoCard({proj,cur,users,clients,tasks,onDelete,onEdit}){
-  const[expanded,setExpanded]=useState(false);
-  const[showIniciar,setShowIniciar]=useState(false);
-  const[showCerrar,setShowCerrar]=useState(false);
-  const[showNSub,setShowNSub]=useState(false);
-  const[descSesion,setDescSesion]=useState("");
-  const[obsSesion,setObsSesion]=useState("");
-  const[nst,setNst]=useState({title:"",assignedTo:"",periodo:""});
-  const cl=clients.find(c=>String(c.id)===String(proj.clientId));
-  const asignador=users.find(u=>String(u.id)===String(proj.assignedBy));
-  const sesiones=proj.sesiones||[];
-  const sesionActiva=sesiones.find(s=>s.status==="activa");
-  const totalMs=sesiones.reduce((acc,s)=>acc+(s.status==="activa"?s.activeMs+(ts()-s.startedAt):s.activeMs),0);
-  const subTo=users.filter(u=>u.role==="junior");
-  const isOwner=String(proj.assignedTo)===String(cur.id);
-  const isCreator=String(proj.assignedBy)===String(cur.id);
-  const isCompletado=proj.status==="completado";
-  const periodos=proj.periodos||(proj.periodo?[proj.periodo]:[]);
-  // sub-tareas de este proyecto
-  const projSubs=tasks.filter(t=>String(t.parentId)===String(proj.id));
-
-  const iniciarSesion=async()=>{
-    if(!descSesion.trim())return;
-    const nueva={id:"s"+ts(),desc:descSesion.trim(),startedAt:ts(),activeMs:0,status:"activa",fecha:ts()};
-    await fbSet("projects",proj.id,{...proj,sesiones:[...sesiones,nueva],status:"activo"});
-    setDescSesion("");setShowIniciar(false);
-  };
-  const cerrarSesion=<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TimeTrack Pro — Census Consultores</title>
-  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:system-ui,-apple-system,sans-serif;background:#F5F5F0;}
-    input,select,button,textarea{font-family:inherit;}
-    ::-webkit-scrollbar{width:6px;}
-    ::-webkit-scrollbar-track{background:#F5F5F0;}
-    ::-webkit-scrollbar-thumb{background:#C9A84C;border-radius:99px;}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-  </style>
-</head>
-<body><div id="root"></div>
-<script type="module">
-  import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import{getFirestore,collection,onSnapshot,doc,setDoc,deleteDoc}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  const cfg={apiKey:"AIzaSyAxFiWMwOlF-Sh5AWjdSrUgXxyxyM27hvQ",authDomain:"timetrack-census.firebaseapp.com",projectId:"timetrack-census",storageBucket:"timetrack-census.firebasestorage.app",messagingSenderId:"43634290060",appId:"1:43634290060:web:36c8013016d589a6af3aa9"};
-  const app=initializeApp(cfg);const db=getFirestore(app);
-  window._db=db;window._col=collection;window._snap=onSnapshot;window._doc=doc;window._set=setDoc;window._del=deleteDoc;window._fbReady=true;
-  window.dispatchEvent(new Event("fb-ready"));
-</script>
-<script type="text/babel">
-const{useState,useEffect}=React;
 
 const TASKS_LIST=["Elaboración de pruebas","Seguimiento","Revisión de pruebas","Levantamiento y desarrollo de análisis inicial","Revisión de análisis","Reunión interna","Reunión externa","Gestión de documentos (entrega y recepción)","Gestión de documentos archivo"];
 const TIPOS_DEVOLUCION=["Devolución de IVA Exportador","Devolución de IVA Proveedor Directo","Devolución Retenciones de IVA","Devolución de IVA - Interes Social","Devolución de IVA - Proyectos Inmobiliarios","Renta - Pago indebido","Renta - Pago en exceso","Otros pagos indebidos o en exceso"];
@@ -95,7 +37,6 @@ const P={gold:"#C9A84C",goldL:"#F0D080",goldD:"#8B6914",black:"#0F0F0F",dark:"#1
 const ROLES={jefe:{label:"💼 Jefe",color:P.black,bg:"#F0E8C8"},coordinadora:{label:"👑 Coordinador",color:P.goldD,bg:"#FDF6DC"},senior:{label:"🔵 Senior",color:"#1A4A7A",bg:"#D6E8F7"},semsenior:{label:"🟡 Semi Senior",color:"#7A4A00",bg:"#FFF0CC"},junior:{label:"🟢 Junior",color:"#1A5C2A",bg:"#D6F0DC"}};
 const ROLE_ORDER=["jefe","coordinadora","senior","semsenior","junior"];
 const CAN_ASSIGN_TO={jefe:["coordinadora","senior","semsenior","junior"],coordinadora:["senior","semsenior","junior"],senior:["semsenior","junior"],semsenior:["junior"],junior:[]};
-
 const INIT_USERS=[
   {id:"u0",name:"Marcela Alejandro",firstName:"Marcela",lastName:"Alejandro",email:"m.alejandro@censusconsultores.com.ec",password:"GUAC2024",role:"jefe",avatar:"👩‍💼"},
   {id:"u1",name:"Denisse Terán",firstName:"Denisse",lastName:"Terán",email:"d.teran@censusconsultores.com.ec",password:"TERA2024",role:"coordinadora",avatar:"👑"},
@@ -135,7 +76,6 @@ const rbg=r=>ROLES[r]?.bg||P.lightG;
 const rl=r=>ROLES[r]?.label||r;
 const rBadge=r=>({background:rbg(r),color:rc(r),border:`1px solid ${rc(r)}44`,padding:"2px 8px",borderRadius:99,fontSize:11,fontWeight:700,display:"inline-block"});
 const iSt={width:"100%",marginTop:4,marginBottom:12,padding:"9px 10px",border:`1.5px solid ${P.border}`,borderRadius:7,fontSize:13,boxSizing:"border-box",outline:"none",background:P.white};
-
 const fbSet=async(col,id,data)=>{if(!window._db)return;try{await window._set(window._doc(window._db,col,String(id)),data);}catch(e){console.error(e);}};
 const fbDel=async(col,id)=>{if(!window._db)return;try{await window._del(window._doc(window._db,col,String(id)));}catch(e){console.error(e);}};
 
@@ -149,7 +89,6 @@ function Modal({title,onClose,children,wide}){
     </div>
   </div>;
 }
-
 function BtnRow({onCancel,onConfirm,label,color,disabled}){
   return <div style={{display:"flex",gap:10}}>
     <button onClick={onCancel} style={{flex:1,padding:10,border:`1.5px solid ${P.border}`,borderRadius:8,background:P.white,cursor:"pointer",fontWeight:600,color:P.gray}}>Cancelar</button>
@@ -157,14 +96,14 @@ function BtnRow({onCancel,onConfirm,label,color,disabled}){
   </div>;
 }
 
-function ProyectoCard({proj,cur,users,clients,tasks,onDelete}){
+function ProyectoCard({proj,cur,users,clients,tasks,onDelete,onEdit}){
   const[expanded,setExpanded]=useState(false);
   const[showIniciar,setShowIniciar]=useState(false);
   const[showCerrar,setShowCerrar]=useState(false);
   const[showNSub,setShowNSub]=useState(false);
   const[descSesion,setDescSesion]=useState("");
   const[obsSesion,setObsSesion]=useState("");
-  const[nst,setNst]=useState({title:"",assignedTo:""});
+  const[nst,setNst]=useState({title:"",assignedTo:"",periodo:""});
   const cl=clients.find(c=>String(c.id)===String(proj.clientId));
   const asignador=users.find(u=>String(u.id)===String(proj.assignedBy));
   const sesiones=proj.sesiones||[];
@@ -172,7 +111,12 @@ function ProyectoCard({proj,cur,users,clients,tasks,onDelete}){
   const totalMs=sesiones.reduce((acc,s)=>acc+(s.status==="activa"?s.activeMs+(ts()-s.startedAt):s.activeMs),0);
   const subTo=users.filter(u=>u.role==="junior");
   const isOwner=String(proj.assignedTo)===String(cur.id);
+  const isCreator=String(proj.assignedBy)===String(cur.id);
   const isCompletado=proj.status==="completado";
+  // compatibilidad: proyectos antiguos tienen periodo (string), nuevos tienen periodos (array)
+  const periodos=proj.periodos||(proj.periodo?[proj.periodo]:[]);
+  const projSubs=tasks.filter(t=>String(t.parentId)===String(proj.id));
+  const horasPorPeriodo=periodos.map(p=>({periodo:p,horas:Math.round(projSubs.filter(t=>t.periodo===p).reduce((s,t)=>s+(t.hours||msToH(liveMs(t))),0)*100)/100}));
 
   const iniciarSesion=async()=>{
     if(!descSesion.trim())return;
@@ -193,10 +137,10 @@ function ProyectoCard({proj,cur,users,clients,tasks,onDelete}){
     await fbSet("projects",proj.id,{...proj,sesiones:upd,status:"completado",completadoAt:ts(),totalHoras:msToH(totalMs)});
   };
   const addSubtask=async()=>{
-    if(!nst.title||!nst.assignedTo)return;
-    const st=mkTask({title:nst.title,assignedTo:nst.assignedTo,assignedBy:cur.id,parentId:proj.id,parentTitle:proj.nombre,clientId:proj.clientId,tipoDevolucion:proj.tipoDevolucion,periodo:proj.periodo});
+    if(!nst.title||!nst.assignedTo||!nst.periodo)return;
+    const st=mkTask({title:nst.title,assignedTo:nst.assignedTo,assignedBy:cur.id,parentId:proj.id,parentTitle:proj.nombre,clientId:proj.clientId,tipoDevolucion:proj.tipoDevolucion,periodo:nst.periodo});
     await fbSet("tasks",st.id,st);
-    setNst({title:"",assignedTo:""});setShowNSub(false);
+    setNst({title:"",assignedTo:"",periodo:""});setShowNSub(false);
   };
 
   return <div style={{background:P.white,borderRadius:12,border:`2px solid ${sesionActiva?"#0F766E":isCompletado?"#BBF7D0":P.border}`,padding:16,marginBottom:12,boxShadow:sesionActiva?`0 2px 16px #0F766E33`:"0 1px 4px #00000011"}}>
@@ -211,9 +155,10 @@ function ProyectoCard({proj,cur,users,clients,tasks,onDelete}){
         <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
           {cl&&<span style={{fontSize:11,color:P.goldD,background:P.lightG,padding:"2px 8px",borderRadius:99,border:`1px solid ${P.border}`}}>🏢 {cl.compania}</span>}
           {proj.tipoDevolucion&&<span style={{fontSize:11,color:"#1A4A7A",background:"#D6E8F7",padding:"2px 8px",borderRadius:99}}>📋 {proj.tipoDevolucion}</span>}
-          {proj.periodo&&<span style={{fontSize:11,color:P.gray,background:P.lightG,padding:"2px 8px",borderRadius:99}}>📅 {proj.periodo}</span>}
+          {periodos.map(p=><span key={p} style={{fontSize:11,color:P.gray,background:P.lightG,padding:"2px 8px",borderRadius:99}}>📅 {p}</span>)}
           {asignador&&<span style={{fontSize:11,color:P.gray}}>por {asignador.firstName}</span>}
           <span style={{fontSize:11,color:P.gray}}>📁 {sesiones.length} sesión{sesiones.length!==1?"es":""}</span>
+          {projSubs.length>0&&<span style={{fontSize:11,color:P.gray}}>🔗 {projSubs.length} sub-tarea{projSubs.length!==1?"s":""}</span>}
         </div>
       </div>
       <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
@@ -229,7 +174,8 @@ function ProyectoCard({proj,cur,users,clients,tasks,onDelete}){
           <button onClick={completarProyecto} style={{padding:"6px 12px",background:P.gold,color:P.black,border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:12}}>✅ Completar</button>
         </div>}
         <div style={{display:"flex",gap:5}}>
-          <button onClick={()=>setExpanded(v=>!v)} style={{padding:"5px 10px",background:P.lightG,border:`1px solid ${P.border}`,borderRadius:7,cursor:"pointer",fontSize:11,color:P.gray,fontWeight:600}}>{expanded?"▲ Ocultar":"▼ Ver sesiones"}</button>
+          {(isCreator||isOwner)&&!isCompletado&&<button onClick={()=>onEdit(proj)} style={{padding:"5px 10px",background:"#F0F9FF",border:`1px solid ${P.ai}`,borderRadius:7,cursor:"pointer",fontSize:11,color:"#0369A1",fontWeight:600}}>✏️ Editar</button>}
+          <button onClick={()=>setExpanded(v=>!v)} style={{padding:"5px 10px",background:P.lightG,border:`1px solid ${P.border}`,borderRadius:7,cursor:"pointer",fontSize:11,color:P.gray,fontWeight:600}}>{expanded?"▲ Ocultar":"▼ Ver detalle"}</button>
           <button onClick={()=>onDelete(proj.id)} style={{padding:"5px 9px",background:"#FEF2F2",color:P.danger,border:"1px solid #FECACA",borderRadius:7,cursor:"pointer",fontSize:12}}>🗑️</button>
         </div>
       </div>
@@ -240,7 +186,16 @@ function ProyectoCard({proj,cur,users,clients,tasks,onDelete}){
       <div style={{fontSize:12,fontWeight:700,color:P.proj}}>{fmtT(sesionActiva.activeMs+(ts()-sesionActiva.startedAt))}</div>
     </div>}
     {expanded&&<div style={{marginTop:10,borderTop:`1px solid ${P.border}`,paddingTop:10}}>
-      <div style={{fontSize:11,fontWeight:700,color:P.goldD,marginBottom:8}}>HISTORIAL DE SESIONES</div>
+      {periodos.length>0&&projSubs.length>0&&<>
+        <div style={{fontSize:11,fontWeight:700,color:P.goldD,marginBottom:8,letterSpacing:1}}>HORAS POR PERIODO</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>
+          {horasPorPeriodo.map(({periodo,horas})=><div key={periodo} style={{background:P.lightG,border:`1px solid ${P.border}`,borderRadius:8,padding:"6px 12px",textAlign:"center"}}>
+            <div style={{fontSize:10,color:P.gray}}>📅 {periodo}</div>
+            <div style={{fontSize:14,fontWeight:800,color:P.goldD}}>{horas}h</div>
+          </div>)}
+        </div>
+      </>}
+      <div style={{fontSize:11,fontWeight:700,color:P.goldD,marginBottom:8,letterSpacing:1}}>HISTORIAL DE SESIONES</div>
       {sesiones.filter(s=>s.status==="cerrada").length===0&&<div style={{fontSize:12,color:P.gray,fontStyle:"italic",marginBottom:8}}>Sin sesiones cerradas aún.</div>}
       {sesiones.filter(s=>s.status==="cerrada").map((s,i)=><div key={s.id} style={{display:"flex",justifyContent:"space-between",padding:"8px 10px",background:i%2===0?P.white:P.lightG,borderRadius:7,marginBottom:4,border:`1px solid ${P.border}44`,flexWrap:"wrap",gap:6}}>
         <div>
@@ -271,7 +226,15 @@ function ProyectoCard({proj,cur,users,clients,tasks,onDelete}){
       <BtnRow onCancel={()=>setShowCerrar(false)} onConfirm={cerrarSesion} label="⏹ Cerrar sesión" color={P.goldD}/>
     </Modal>}
     {showNSub&&<Modal title="➕ Sub-tarea del Proyecto" onClose={()=>setShowNSub(false)}>
-      <div style={{background:"#F0F9FF",border:`1px solid ${P.ai}`,borderRadius:8,padding:"8px 12px",marginBottom:14,fontSize:12,color:"#0369A1"}}>La sub-tarea aparecerá en el tablero del Junior asignado.</div>
+      <div style={{background:"#F0F9FF",border:`1px solid ${P.ai}`,borderRadius:8,padding:"8px 12px",marginBottom:14,fontSize:12,color:"#0369A1"}}>La sub-tarea aparecerá en el tablero del colaborador asignado.</div>
+      <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Periodo</label>
+      {periodos.length>0
+        ?<select value={nst.periodo} onChange={e=>setNst({...nst,periodo:e.target.value})} style={iSt}>
+          <option value="">Selecciona periodo...</option>
+          {periodos.map(p=><option key={p} value={p}>📅 {p}</option>)}
+        </select>
+        :<input value={nst.periodo} onChange={e=>setNst({...nst,periodo:e.target.value})} placeholder="Ej: Enero 2025" style={iSt}/>
+      }
       <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Actividad</label>
       <select value={nst.title} onChange={e=>setNst({...nst,title:e.target.value})} style={iSt}>
         <option value="">Selecciona actividad...</option>
@@ -282,7 +245,7 @@ function ProyectoCard({proj,cur,users,clients,tasks,onDelete}){
         <option value="">Selecciona persona...</option>
         {subTo.map(u=><option key={u.id} value={u.id}>{u.avatar} {u.firstName} {u.lastName}</option>)}
       </select>
-      <BtnRow onCancel={()=>setShowNSub(false)} onConfirm={addSubtask} label="Asignar ⏱️" color={P.black} disabled={!nst.title||!nst.assignedTo}/>
+      <BtnRow onCancel={()=>setShowNSub(false)} onConfirm={addSubtask} label="Asignar ⏱️" color={P.black} disabled={!nst.title||!nst.assignedTo||!nst.periodo}/>
     </Modal>}
   </div>;
 }
@@ -331,7 +294,8 @@ function ReporteView({tasks,projects,clients,users}){
     });
     projects.forEach(proj=>{
       const cl=gC(proj.clientId);
-      const tramite=cl?`${cl.compania} | ${proj.tipoDevolucion||""} | ${proj.periodo||""}`:"Sin trámite";
+      const periodos=proj.periodos||(proj.periodo?[proj.periodo]:[]);
+      const tramite=cl?`${cl.compania} | ${proj.tipoDevolucion||""} | ${periodos.join(", ")}`:"Sin trámite";
       const persona=gU(proj.assignedTo);
       (proj.sesiones||[]).filter(s=>s.status==="cerrada").forEach(s=>{
         const fecha=new Date(s.fecha);if(d&&fecha<d)return;if(h&&fecha>h)return;
@@ -412,7 +376,6 @@ function App(){
   const[loading,setLoading]=useState(true);
   const[customActivities,setCustomActivities]=useState([]);
   const[extendedTasks,setExtendedTasks]=useState({});
-
   const[showNT,setShowNT]=useState(false);
   const[showNotifP,setShowNotifP]=useState(false);
   const[showST,setShowST]=useState(null);
@@ -428,14 +391,13 @@ function App(){
   const[showActMgr,setShowActMgr]=useState(false);const[newAct,setNewAct]=useState("");
   const[showNProy,setShowNProy]=useState(false);
   const[nproy,setNproy]=useState({nombre:"",assignedTo:"",clientId:"",tipoDevolucion:"",periodos:[]});
-  const[editProy,setEditProy]=useState(null); // proyecto a editar
+  const[editProy,setEditProy]=useState(null);
   const[nt,setNt]=useState({title:"",assignedTo:"",clientId:"",tipoDevolucion:"",periodos:[],urgente:false});
   const[nst,setNst]=useState({title:"",assignedTo:""});
   const[clf,setClf]=useState({compania:"",tiposDevolucion:[],periodos:[""]});
 
   useEffect(()=>{const t=setInterval(()=>setTick(x=>x+1),1000);return()=>clearInterval(t);},[]);
   useEffect(()=>{if(window._fbReady){setFbReady(true);return;}window.addEventListener("fb-ready",()=>setFbReady(true),{once:true});},[]);
-
   useEffect(()=>{
     if(!fbReady)return;
     const db=window._db;
@@ -449,7 +411,6 @@ function App(){
     const unsubCfg=window._snap(window._col(db,"config"),snap=>{snap.docs.forEach(d=>{if(d.id==="activities")setCustomActivities(d.data().list||[]);});});
     return()=>{unsubT();unsubP();unsubC();unsubU();unsubCfg();};
   },[fbReady]);
-
   useEffect(()=>{
     const chk=()=>{const w=isWorkHour();tasks.forEach(t=>{
       if(!w&&t.status==="inprogress"&&!extendedTasks[t.id]?.active)fbSet("tasks",t.id,{...t,status:"paused",activeMs:t.activeMs+(ts()-t.startedAt),pausedAt:ts(),autopaused:true});
@@ -480,24 +441,18 @@ function App(){
     if(isSr||isSs)return tasks.filter(t=>String(t.assignedTo)===String(cur.id)||String(t.assignedBy)===String(cur.id));
     return tasks.filter(t=>String(t.assignedTo)===String(cur.id));
   };
-
   const myProjects=()=>{
     if(!cur)return[];
     if(isJ||isC)return projects;
-    return projects.filter(p=>String(p.assignedTo)===String(cur.id));
+    return projects.filter(p=>String(p.assignedTo)===String(cur.id)||String(p.assignedBy)===String(cur.id));
   };
-
   const hasActiveTask=uid=>tasks.some(t=>String(t.assignedTo)===String(uid)&&t.status==="inprogress");
-
   const startNextQueued=async uid=>{
     const q=tasks.filter(t=>String(t.assignedTo)===String(uid)&&t.status==="queued").sort((a,b)=>(b.urgente?1:0)-(a.urgente?1:0));
     if(q.length>0){const next={...q[0],status:"inprogress",startedAt:ts()};await fbSet("tasks",next.id,next);pushN(uid,"Tu siguiente tarea inició automáticamente","nueva",next.title);}
   };
-
   const updTask=async(tid,fn)=>{const t=tasks.find(t=>String(t.id)===String(tid));if(!t)return;await fbSet("tasks",tid,fn(t));};
-
   const toggleUrgente=async tid=>{const t=tasks.find(t=>String(t.id)===String(tid));if(!t)return;await fbSet("tasks",tid,{...t,urgente:!t.urgente});};
-
   const activarUrgente=async currentId=>{
     const curr=tasks.find(t=>String(t.id)===String(currentId));if(!curr)return;
     const uid=curr.assignedTo;
@@ -507,20 +462,16 @@ function App(){
     await fbSet("tasks",uq[0].id,{...uq[0],status:"inprogress",startedAt:ts()});
     pushN(uid,`⚡ Tarea urgente iniciada: ${uq[0].title}`,"nueva",uq[0].title);
   };
-
   const reanudar=async tid=>updTask(tid,t=>({...t,status:"inprogress",startedAt:ts(),pausedAt:null,autopaused:false}));
-
   const confirmarEv=async()=>{
     if(!evNombre.trim()||!showEv)return;
     await updTask(showEv.tid,t=>({...t,status:"paused",activeMs:t.activeMs+(ts()-t.startedAt),pausedAt:ts(),autopaused:false,eventoNombre:evNombre.trim()}));
     setShowEv(null);setEvNombre("");
   };
-
   const iniciarComplete=tid=>{setObsT("");setShowObs(tid);};
   const doComplete=async()=>{
     if(!showObs)return;
     const task=tasks.find(t=>String(t.id)===String(showObs));
-    // guardar extendedMs acumulado
     const ext=extendedTasks[showObs];
     const extraMs=ext?.active?(ext.activeMs+(ts()-ext.startedAt)):ext?.activeMs||0;
     await updTask(showObs,item=>{
@@ -531,7 +482,6 @@ function App(){
     await startNextQueued(task.assignedTo);
     setShowObs(null);setObsT("");
   };
-
   const toggleExtended=async(tid)=>{
     const task=tasks.find(t=>String(t.id)===String(tid));if(!task)return;
     const ext=extendedTasks[tid]||{active:false,startedAt:null,activeMs:0};
@@ -544,9 +494,7 @@ function App(){
       if(task.status==="paused")await fbSet("tasks",tid,{...task,status:"inprogress",startedAt:ts(),pausedAt:null,autopaused:false});
     }
   };
-
   const liveExtMs=tid=>{const ext=extendedTasks[tid];if(!ext)return 0;return ext.active?ext.activeMs+(ts()-ext.startedAt):ext.activeMs;};
-
   const addTaskMasiva=async()=>{
     if(!nt.title||!nt.assignedTo||!nt.clientId||!nt.tipoDevolucion||!nt.periodos?.length)return;
     for(const periodo of nt.periodos){
@@ -560,7 +508,6 @@ function App(){
     pushN(nt.assignedTo,`${cur.firstName} te asignó ${nt.periodos.length} tarea${nt.periodos.length>1?"s":""}`,"nueva",nt.title);
     setNt({title:"",assignedTo:"",clientId:"",tipoDevolucion:"",periodos:[],urgente:false});setShowNT(false);
   };
-
   const addSub=async pid=>{
     if(!nst.title||!nst.assignedTo)return;
     const parent=tasks.find(t=>String(t.id)===String(pid));if(!parent)return;
@@ -569,7 +516,6 @@ function App(){
     pushN(nst.assignedTo,`${cur.firstName} te asignó una sub-tarea`,"nueva",nst.title);
     setNst({title:"",assignedTo:""});setShowST(null);
   };
-
   const addProyecto=async()=>{
     if(!nproy.nombre.trim()||!nproy.assignedTo||!nproy.clientId||!nproy.periodos?.length)return;
     const proj={id:"p"+ts(),nombre:nproy.nombre.trim(),assignedTo:nproy.assignedTo,assignedBy:cur.id,clientId:nproy.clientId,tipoDevolucion:nproy.tipoDevolucion||"",periodos:nproy.periodos,sesiones:[],status:"pendiente",creadoAt:ts()};
@@ -577,15 +523,12 @@ function App(){
     pushN(nproy.assignedTo,`${cur.firstName} te asignó el proyecto: ${proj.nombre}`,"nueva",proj.nombre);
     setNproy({nombre:"",assignedTo:"",clientId:"",tipoDevolucion:"",periodos:[]});setShowNProy(false);
   };
-
   const saveEditProy=async()=>{
     if(!editProy)return;
     await fbSet("projects",editProy.id,editProy);
     setEditProy(null);
   };
-
   const sendRem=task=>{const a=gU(task.assignedTo);if(!a)return;pushN(task.assignedTo,"Recordatorio de tarea pendiente","pendiente",task.title);alert(`✅ Recordatorio enviado a ${a.firstName}`);};
-
   const openNC=()=>{setClf({compania:"",tiposDevolucion:[],periodos:[""]});setEditCl(null);setShowCF(true);};
   const openEC=cl=>{setClf({compania:cl.compania,tiposDevolucion:cl.tiposDevolucion||[],periodos:[...(cl.periodos||[])]});setEditCl(cl);setShowCF(true);};
   const saveCl=async()=>{
@@ -650,7 +593,6 @@ function App(){
     const canSub=!isSub&&isAssignee&&CAN_ASSIGN_TO[role]?.length>0;
     const borderCol=task.urgente?P.urgent:isSub?"#0369A1":isP?P.goldD:isR?P.gold:isQ?"#7C3AED33":P.border;
     const extActive=extendedTasks[task.id]?.active;
-
     return <div key={task.id} style={{background:P.white,borderRadius:12,border:`1.5px solid ${borderCol}`,padding:16,marginBottom:12,boxShadow:extActive?`0 2px 16px ${P.ext}44`:isR?`0 2px 12px ${P.gold}33`:"0 1px 4px #00000011",opacity:isQ?0.85:1}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
         <div style={{flex:1,minWidth:180}}>
@@ -658,7 +600,7 @@ function App(){
             {isSub&&<span style={{background:"#E0F2FE",color:"#0369A1",fontSize:10,padding:"2px 7px",borderRadius:99,fontWeight:800}}>↳ SUB-TAREA</span>}
             {task.urgente&&<span style={{background:P.urgent,color:P.white,fontSize:10,padding:"1px 6px",borderRadius:99,fontWeight:800}}>⚡ URGENTE</span>}
             {isQ&&<span style={{background:"#EDE9FE",color:P.urgent,fontSize:10,padding:"1px 6px",borderRadius:99,fontWeight:800}}>⏳ EN COLA</span>}
-            {extActive&&<span style={{background:"#F5F3FF",color:P.ext,fontSize:10,padding:"1px 6px",borderRadius:99,fontWeight:800}}>🌙 MODO EXTENDIDO</span>}
+            {extActive&&<span style={{background:"#F5F3FF",color:P.ext,fontSize:10,padding:"1px 6px",borderRadius:99,fontWeight:800}}>🌙 EXTENDIDO</span>}
             <span style={{fontWeight:700,color:P.black,fontSize:14}}>{task.title}</span>
             {!isSub&&<button onClick={()=>setShowDel(task.id)} style={{marginLeft:"auto",padding:"3px 10px",background:"#FEF2F2",color:P.danger,border:"1px solid #FECACA",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:12}}>🗑️</button>}
           </div>
@@ -674,7 +616,6 @@ function App(){
             {asr&&<span style={{fontSize:11,color:P.gray}}>por {asr.firstName}</span>}
             {task.eventoNombre&&isP&&<span style={{fontSize:11,background:"#FFF0CC",color:P.goldD,padding:"2px 8px",borderRadius:99}}>📌 {task.eventoNombre}</span>}
           </div>
-          {task.observacion&&isD&&<div style={{marginTop:6,fontSize:12,color:P.gray,background:P.lightG,borderRadius:6,padding:"5px 8px",border:`1px solid ${P.border}`}}>💬 {task.observacion}</div>}
         </div>
         <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
           {!isQ&&<div style={{background:extActive?"#F5F3FF":isD?"#F9F5E7":isP?"#FFF7ED":P.lightG,border:`1.5px solid ${extActive?P.ext:isD?P.gold:isP?P.goldD:P.gold}`,borderRadius:8,padding:"6px 12px",textAlign:"center",minWidth:116}}>
@@ -691,7 +632,6 @@ function App(){
             {!isSub&&!isD&&!isR&&<button onClick={()=>toggleUrgente(task.id)} style={{padding:"5px 9px",background:task.urgente?P.urgent:"transparent",color:task.urgente?P.white:P.urgent,border:`1px solid ${P.urgent}`,borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:700}}>⚡</button>}
             {!isSub&&!isD&&isR&&<button onClick={()=>activarUrgente(task.id)} style={{padding:"5px 9px",background:P.gold,color:P.black,border:`1px solid ${P.goldD}`,borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:800}}>⚡</button>}
             {!isSub&&!isD&&!isQ&&<button onClick={()=>sendRem(task)} style={{padding:"5px 9px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:7,cursor:"pointer",fontSize:12}}>🔔</button>}
-            {/* Modo extendido */}
             {!isD&&!isQ&&isAssignee&&<button onClick={()=>toggleExtended(task.id)} style={{padding:"5px 9px",background:extActive?P.ext:"transparent",color:extActive?P.white:P.ext,border:`1.5px solid ${P.ext}`,borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:800}}>🌙</button>}
             {!isD&&!isQ&&isR&&isAssignee&&<button onClick={()=>{setEvNombre("");setShowEv({tid:task.id});}} style={{padding:"6px 10px",background:P.danger,color:P.white,border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:11}}>📌 Evento</button>}
             {!isD&&!isQ&&isP&&isAssignee&&<button onClick={()=>reanudar(task.id)} style={{padding:"6px 10px",background:P.success,color:P.white,border:"none",borderRadius:7,fontWeight:700,cursor:"pointer",fontSize:11}}>▶ Reanudar</button>}
@@ -762,13 +702,11 @@ function App(){
                 {canAssign&&<button onClick={()=>setShowNT(true)} style={{padding:"9px 20px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>+ Nueva Tarea</button>}
               </div>
             </div>
-
             {isSplitView?(
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,alignItems:"start"}}>
                 <div>
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,paddingBottom:8,borderBottom:`2px solid ${P.gold}`}}>
-                    <span style={{fontSize:16}}>📥</span>
-                    <span style={{fontWeight:800,color:P.black,fontSize:15}}>Mis tareas</span>
+                    <span style={{fontSize:16}}>📥</span><span style={{fontWeight:800,color:P.black,fontSize:15}}>Mis tareas</span>
                     <span style={{background:P.gold,color:P.black,borderRadius:99,fontWeight:800,fontSize:11,padding:"1px 8px",marginLeft:"auto"}}>{misTareas.length+misProyectos.length}</span>
                   </div>
                   {misProyectos.map(p=><ProyectoCard key={p.id} proj={p} cur={cur} users={users} clients={clients} tasks={tasks} onDelete={id=>fbDel("projects",id)} onEdit={p=>setEditProy(p)}/>)}
@@ -777,8 +715,7 @@ function App(){
                 </div>
                 <div>
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,paddingBottom:8,borderBottom:`2px solid ${P.proj}`}}>
-                    <span style={{fontSize:16}}>📤</span>
-                    <span style={{fontWeight:800,color:P.black,fontSize:15}}>Tareas asignadas</span>
+                    <span style={{fontSize:16}}>📤</span><span style={{fontWeight:800,color:P.black,fontSize:15}}>Tareas asignadas</span>
                     <span style={{background:P.proj,color:P.white,borderRadius:99,fontWeight:800,fontSize:11,padding:"1px 8px",marginLeft:"auto"}}>{tareasAsignadas.length+proyAsignados.length}</span>
                   </div>
                   {proyAsignados.map(p=><ProyectoCard key={p.id} proj={p} cur={cur} users={users} clients={clients} tasks={tasks} onDelete={id=>fbDel("projects",id)} onEdit={p=>setEditProy(p)}/>)}
@@ -815,7 +752,6 @@ function App(){
               {canClients&&<button onClick={openNC} style={{padding:"8px 18px",background:P.black,color:P.gold,border:`1px solid ${P.gold}`,borderRadius:8,fontWeight:700,cursor:"pointer",fontSize:13}}>+ Nuevo Cliente</button>}
             </div>
           </div>
-          {!canClients&&!canAddPeriodos&&<div style={{background:"#FFF8E7",border:`1px solid ${P.border}`,borderRadius:10,padding:12,color:P.goldD,fontSize:13,marginBottom:14}}>Solo Jefe, Coordinador y Senior pueden gestionar clientes.</div>}
           {canAddPeriodos&&<div style={{background:"#F0F9FF",border:`1px solid ${P.ai}`,borderRadius:10,padding:12,color:"#0369A1",fontSize:13,marginBottom:14}}>📅 Puedes agregar periodos a los clientes existentes.</div>}
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}}>
             {clients.map(cl=><div key={cl.id} style={{background:P.white,borderRadius:12,border:`1.5px solid ${P.border}`,padding:18}}>
@@ -903,7 +839,7 @@ function App(){
       </div>
 
       {/* MODALES */}
-      {showDel&&(()=>{const t=tasks.find(t=>String(t.id)===String(showDel));return <Modal title="🗑️ Eliminar Tarea" onClose={()=>setShowDel(null)}>
+      {showDel&&(()=>{const t=tasks.find(t=>String(t.id)===String(showDel));return <Modal title="🗑️ Eliminar" onClose={()=>setShowDel(null)}>
         <p style={{fontSize:14,color:P.dark,margin:"0 0 10px"}}>¿Eliminar esta tarea permanentemente?</p>
         <div style={{background:P.lightG,border:`1px solid ${P.border}`,borderRadius:8,padding:"10px 14px",marginBottom:12}}><span style={{fontWeight:700,color:P.black}}>{t?.title}</span></div>
         <p style={{fontSize:12,color:P.danger,margin:"0 0 16px"}}>⚠️ Esta acción no se puede deshacer.</p>
@@ -911,26 +847,24 @@ function App(){
       </Modal>;})()}
 
       {showEv&&<Modal title="📌 Evento No Relacionado" onClose={()=>setShowEv(null)}>
-        <p style={{fontSize:13,color:P.gray,margin:"0 0 12px"}}>Indica el nombre del evento externo:</p>
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Nombre del evento *</label>
         <input value={evNombre} onChange={e=>setEvNombre(e.target.value)} onKeyDown={e=>e.key==="Enter"&&confirmarEv()} placeholder="Ej: Reunión administrativa..." style={iSt} autoFocus/>
         <BtnRow onCancel={()=>setShowEv(null)} onConfirm={confirmarEv} label="📌 Registrar y pausar" color={P.danger} disabled={!evNombre.trim()}/>
       </Modal>}
 
       {showObs&&(()=>{
-        const item=tasks.find(t=>String(t.id)===String(showObs));const ms=item?liveMs(item):0;
-        const extMs=liveExtMs(showObs);
+        const item=tasks.find(t=>String(t.id)===String(showObs));const ms=item?liveMs(item):0;const extMs=liveExtMs(showObs);
         return <Modal title="✅ Completar Tarea" onClose={()=>setShowObs(null)}>
           <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Observación <span style={{fontWeight:400,color:P.gray}}>(opcional)</span></label>
           <textarea value={obsT} onChange={e=>setObsT(e.target.value)} placeholder="Ej: Se encontraron diferencias..." style={{...iSt,height:80,resize:"vertical"}}/>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+          <div style={{display:"grid",gridTemplateColumns:extMs>0?"1fr 1fr":"1fr",gap:10,marginBottom:14}}>
             <div style={{background:P.lightG,border:`1.5px solid ${P.gold}`,borderRadius:10,padding:12,textAlign:"center"}}>
               <div style={{fontSize:11,fontWeight:700,color:P.goldD}}>TIEMPO NORMAL</div>
               <div style={{fontSize:18,fontWeight:800,color:P.black}}>{fmtT(ms)}</div>
               <div style={{fontSize:11,color:P.gray}}>≈ {msToH(ms)}h</div>
             </div>
             {extMs>0&&<div style={{background:"#F5F3FF",border:`1.5px solid ${P.ext}`,borderRadius:10,padding:12,textAlign:"center"}}>
-              <div style={{fontSize:11,fontWeight:700,color:P.ext}}>🌙 TIEMPO EXTENDIDO</div>
+              <div style={{fontSize:11,fontWeight:700,color:P.ext}}>🌙 EXTENDIDO</div>
               <div style={{fontSize:18,fontWeight:800,color:P.ext}}>{fmtT(extMs)}</div>
               <div style={{fontSize:11,color:P.gray}}>≈ {msToH(extMs)}h</div>
             </div>}
@@ -945,7 +879,7 @@ function App(){
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Confirmar</label><input value={pf.confirm} onChange={e=>setPf({...pf,confirm:e.target.value})} type="password" style={iSt}/>
         {pErr&&<div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:8,padding:"8px 12px",color:P.danger,fontSize:13,marginBottom:10}}>⚠️ {pErr}</div>}
         {pOk&&<div style={{background:"#F0FDF4",border:"1px solid #BBF7D0",borderRadius:8,padding:"8px 12px",color:P.success,fontSize:13,marginBottom:10}}>✅ ¡Actualizada!</div>}
-        <BtnRow onCancel={()=>{setShowCP(false);setPErr("");setPf({current:"",nuevo:"",confirm:""}); }} onConfirm={savePass} label="Guardar" color={P.black}/>
+        <BtnRow onCancel={()=>{setShowCP(false);setPErr("");setPf({current:"",nuevo:"",confirm:""});}} onConfirm={savePass} label="Guardar" color={P.black}/>
       </Modal>}
 
       {showCF&&<Modal title={editCl?(canClients?"✏️ Editar Cliente":"📅 Agregar Periodo"):"🏢 Nuevo Cliente"} onClose={()=>setShowCF(false)}>
@@ -995,8 +929,7 @@ function App(){
             <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Periodos <span style={{fontWeight:400,color:P.goldD,fontSize:11}}>(selecciona uno o varios)</span></label>
             <div style={{display:"flex",flexDirection:"column",gap:5,marginTop:6,marginBottom:12,maxHeight:160,overflowY:"auto",padding:8,border:`1px solid ${P.border}`,borderRadius:7,background:P.lightG}}>
               {(clients.find(c=>String(c.id)===String(nt.clientId))?.periodos||[]).map(p=><label key={p} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,color:P.dark,padding:"4px 6px",borderRadius:6,background:nt.periodos.includes(p)?P.white:"transparent",border:nt.periodos.includes(p)?`1px solid ${P.border}`:"1px solid transparent"}}>
-                <input type="checkbox" checked={nt.periodos.includes(p)} onChange={()=>setNt({...nt,periodos:nt.periodos.includes(p)?nt.periodos.filter(x=>x!==p):[...nt.periodos,p]})} style={{accentColor:P.goldD,width:14,height:14}}/>
-                📅 {p}
+                <input type="checkbox" checked={nt.periodos.includes(p)} onChange={()=>setNt({...nt,periodos:nt.periodos.includes(p)?nt.periodos.filter(x=>x!==p):[...nt.periodos,p]})} style={{accentColor:P.goldD,width:14,height:14}}/>📅 {p}
               </label>)}
             </div>
             {nt.periodos.length>0&&<div style={{background:"#F0F9FF",border:`1px solid ${P.ai}`,borderRadius:7,padding:"7px 10px",marginBottom:10,fontSize:12,color:"#0369A1"}}>
@@ -1005,8 +938,7 @@ function App(){
           </>}
         </>}
         <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",marginBottom:12,fontSize:13,fontWeight:600,color:P.urgent}}>
-          <input type="checkbox" checked={nt.urgente} onChange={e=>setNt({...nt,urgente:e.target.checked})} style={{accentColor:P.urgent,width:15,height:15}}/>
-          ⚡ Marcar como URGENTE
+          <input type="checkbox" checked={nt.urgente} onChange={e=>setNt({...nt,urgente:e.target.checked})} style={{accentColor:P.urgent,width:15,height:15}}/>⚡ Marcar como URGENTE
         </label>
         {hasActiveTask(nt.assignedTo)&&nt.assignedTo&&!nt.urgente&&<div style={{background:"#EDE9FE",border:`1px solid ${P.urgent}`,borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:12,color:P.urgent}}>⏳ Quedará en cola.</div>}
         <BtnRow onCancel={()=>setShowNT(false)} onConfirm={addTaskMasiva} label={`Crear${nt.periodos.length>1?` ${nt.periodos.length} tareas`:" tarea"}`} color={P.black} disabled={!nt.title||!nt.assignedTo||nt.periodos.length===0}/>
@@ -1028,9 +960,9 @@ function App(){
       </Modal>}
 
       {showNProy&&<Modal title="🗂 Nuevo Proyecto" onClose={()=>setShowNProy(false)}>
-        <div style={{background:"#F0FDFA",border:`1px solid #99F6E4`,borderRadius:8,padding:"8px 12px",marginBottom:14,fontSize:12,color:P.proj}}>Se gestiona por sesiones de trabajo con cronómetro libre.</div>
+        <div style={{background:"#F0FDFA",border:`1px solid #99F6E4`,borderRadius:8,padding:"8px 12px",marginBottom:14,fontSize:12,color:P.proj}}>Un proyecto contiene múltiples periodos. Las sub-tareas se asignan por periodo.</div>
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Nombre del proyecto</label>
-        <input value={nproy.nombre} onChange={e=>setNproy({...nproy,nombre:e.target.value})} placeholder="Ej: Auditoría Q1 Empresa ABC" style={iSt}/>
+        <input value={nproy.nombre} onChange={e=>setNproy({...nproy,nombre:e.target.value})} placeholder="Ej: Auditoría Empresa ABC" style={iSt}/>
         <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Asignar a</label>
         <select value={nproy.assignedTo} onChange={e=>setNproy({...nproy,assignedTo:e.target.value})} style={iSt}>
           <option value="">Selecciona colaborador...</option>
@@ -1048,19 +980,29 @@ function App(){
             {(clients.find(c=>String(c.id)===String(nproy.clientId))?.tiposDevolucion||[]).map(td=><option key={td} value={td}>{td}</option>)}
           </select>
           {nproy.tipoDevolucion&&<>
-            <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Periodos <span style={{fontWeight:400,color:P.goldD,fontSize:11}}>(selecciona uno o varios — se crea un proyecto por cada uno)</span></label>
+            <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Periodos <span style={{fontWeight:400,color:P.goldD,fontSize:11}}>(selecciona todos los que apliquen)</span></label>
             <div style={{display:"flex",flexDirection:"column",gap:5,marginTop:6,marginBottom:12,maxHeight:160,overflowY:"auto",padding:8,border:`1px solid ${P.border}`,borderRadius:7,background:P.lightG}}>
               {(clients.find(c=>String(c.id)===String(nproy.clientId))?.periodos||[]).map(p=><label key={p} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,color:P.dark,padding:"4px 6px",borderRadius:6,background:nproy.periodos.includes(p)?P.white:"transparent",border:nproy.periodos.includes(p)?`1px solid ${P.border}`:"1px solid transparent"}}>
-                <input type="checkbox" checked={nproy.periodos.includes(p)} onChange={()=>setNproy({...nproy,periodos:nproy.periodos.includes(p)?nproy.periodos.filter(x=>x!==p):[...nproy.periodos,p]})} style={{accentColor:P.goldD,width:14,height:14}}/>
-                📅 {p}
+                <input type="checkbox" checked={nproy.periodos.includes(p)} onChange={()=>setNproy({...nproy,periodos:nproy.periodos.includes(p)?nproy.periodos.filter(x=>x!==p):[...nproy.periodos,p]})} style={{accentColor:P.goldD,width:14,height:14}}/>📅 {p}
               </label>)}
             </div>
-            {nproy.periodos.length>0&&<div style={{background:"#F0FDFA",border:`1px solid #99F6E4`,borderRadius:7,padding:"7px 10px",marginBottom:10,fontSize:12,color:P.proj}}>
-              🗂 Se crearán <strong>{nproy.periodos.length} proyecto{nproy.periodos.length>1?"s":""}</strong>: {nproy.periodos.join(", ")}
-            </div>}
+            {nproy.periodos.length>0&&<div style={{background:"#F0FDFA",border:`1px solid #99F6E4`,borderRadius:7,padding:"7px 10px",marginBottom:10,fontSize:12,color:P.proj}}>🗂 Periodos: <strong>{nproy.periodos.join(", ")}</strong></div>}
           </>}
         </>}
-        <BtnRow onCancel={()=>setShowNProy(false)} onConfirm={addProyecto} label={`Crear${nproy.periodos.length>1?` ${nproy.periodos.length} proyectos`:" proyecto"}`} color={P.proj} disabled={!nproy.nombre.trim()||!nproy.assignedTo||!nproy.clientId||nproy.periodos.length===0}/>
+        <BtnRow onCancel={()=>setShowNProy(false)} onConfirm={addProyecto} label="🗂 Crear proyecto" color={P.proj} disabled={!nproy.nombre.trim()||!nproy.assignedTo||!nproy.clientId||nproy.periodos.length===0}/>
+      </Modal>}
+
+      {editProy&&<Modal title="✏️ Editar Proyecto" onClose={()=>setEditProy(null)}>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Nombre del proyecto</label>
+        <input value={editProy.nombre} onChange={e=>setEditProy({...editProy,nombre:e.target.value})} style={iSt}/>
+        <label style={{fontSize:13,fontWeight:600,color:P.dark}}>Periodos</label>
+        <div style={{display:"flex",flexDirection:"column",gap:5,marginTop:6,marginBottom:12,maxHeight:180,overflowY:"auto",padding:8,border:`1px solid ${P.border}`,borderRadius:7,background:P.lightG}}>
+          {(clients.find(c=>String(c.id)===String(editProy.clientId))?.periodos||[]).map(p=><label key={p} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,color:P.dark,padding:"4px 6px",borderRadius:6,background:(editProy.periodos||[]).includes(p)?P.white:"transparent",border:(editProy.periodos||[]).includes(p)?`1px solid ${P.border}`:"1px solid transparent"}}>
+            <input type="checkbox" checked={(editProy.periodos||[]).includes(p)} onChange={()=>setEditProy({...editProy,periodos:(editProy.periodos||[]).includes(p)?(editProy.periodos||[]).filter(x=>x!==p):[...(editProy.periodos||[]),p]})} style={{accentColor:P.goldD,width:14,height:14}}/>📅 {p}
+          </label>)}
+        </div>
+        {(editProy.periodos||[]).length>0&&<div style={{background:"#F0FDFA",border:`1px solid #99F6E4`,borderRadius:7,padding:"7px 10px",marginBottom:14,fontSize:12,color:P.proj}}>🗂 Periodos activos: <strong>{(editProy.periodos||[]).join(", ")}</strong></div>}
+        <BtnRow onCancel={()=>setEditProy(null)} onConfirm={saveEditProy} label="💾 Guardar cambios" color={P.black} disabled={!editProy.nombre.trim()||(editProy.periodos||[]).length===0}/>
       </Modal>}
 
       {showAv&&<Modal title="🎨 Elige tu Avatar" onClose={()=>setShowAv(false)}>
